@@ -6,6 +6,9 @@ import {
   scoreKill,
   extraLifeEarned,
   lerp,
+  fireIntervalScale,
+  vespaFires,
+  softenShot,
 } from "../js/core.js";
 
 test("clamp limita o valor", () => {
@@ -32,4 +35,25 @@ test("vida extra nos marcos", () => {
 
 test("lerp interpola", () => {
   assert.equal(lerp(0, 10, 0.5), 5);
+});
+
+test("começo do jogo atira bem mais devagar", () => {
+  const early = fireIntervalScale(0, 0, 10);
+  const late = fireIntervalScale(3, 0, 200);
+  assert.ok(early > 2.5);
+  assert.ok(late === 1);
+  assert.ok(early > fireIntervalScale(1, 0, 80));
+});
+
+test("vespas do estágio 1 quase não atiram", () => {
+  assert.equal(vespaFires(0, 0, 0), true);
+  assert.equal(vespaFires(0, 0, 1), false);
+  assert.equal(vespaFires(0, 0, 2), false);
+  assert.equal(vespaFires(2, 0, 1), true);
+});
+
+test("tiros mirados viram tiro reto no Mar de Vidro", () => {
+  assert.equal(softenShot("gaviao", "aim", 0, 0), "down");
+  assert.equal(softenShot("bufalo", "spread", 0, 0), "down");
+  assert.equal(softenShot("gaviao", "aim", 2, 0), "aim");
 });

@@ -263,21 +263,36 @@ export class Renderer {
 
   _banner(ctx, game) {
     if (game.bannerT <= 0) return;
-    const a = Math.min(1, game.bannerT);
+    const fade = game.bannerT > 0.4 ? 1 : Math.max(0, game.bannerT / 0.4);
+    const x = 14;
+    const y = 38;
+    const w = W - 28;
+    const h = 56;
+    const r = 10;
     ctx.save();
-    ctx.globalAlpha = a;
-    ctx.fillStyle = "#00000066";
-    ctx.fillRect(30, 118, W - 60, 52);
+    ctx.globalAlpha = fade;
+    ctx.fillStyle = "rgba(6, 16, 28, 0.94)";
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+    ctx.fill();
     ctx.strokeStyle = "#e0b84a";
-    ctx.strokeRect(30, 118, W - 60, 52);
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.shadowColor = "#000";
+    ctx.shadowBlur = 10;
     ctx.fillStyle = "#ffe7b3";
     ctx.font = "700 18px Oswald, sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText(game.banner, W / 2, 140);
-    ctx.fillStyle = "#c9d4e0";
-    ctx.font = "600 11px Barlow, sans-serif";
+    ctx.fillText(game.banner, W / 2, y + 24);
+    ctx.fillStyle = "#e8f0f6";
+    ctx.font = "700 12px Barlow, sans-serif";
     const meta = STAGE_META[game.stageIndex];
-    ctx.fillText(meta.subtitle, W / 2, 158);
+    ctx.fillText(meta.subtitle, W / 2, y + 44);
     ctx.restore();
   }
 

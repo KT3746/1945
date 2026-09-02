@@ -429,11 +429,20 @@ button.linkish {
   pointer-events: none;
 }
 
+.ver-inline {
+  margin: 12px 0 0;
+  font-size: 12px;
+  color: #9bb0c088;
+}
+
 @media (max-width: 720px), (pointer: coarse) {
   .touch {
     display: flex;
   }
   .desk-hint {
+    display: none;
+  }
+  .foot {
     display: none;
   }
   .topbar {

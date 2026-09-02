@@ -32,6 +32,8 @@ export class UI {
       ver: document.getElementById("ver"),
     };
     if (this.els.ver) this.els.ver.textContent = `v${VERSION}`;
+    const titleVer = document.getElementById("title-ver");
+    if (titleVer) titleVer.textContent = `v${VERSION}`;
     this._bind();
     this._syncMute();
     this.show("title");

@@ -15,6 +15,26 @@ export const MAX_SPREAD = 5;
 export const MAX_BOMBS = 9;
 export const EXTRA_LIFE_AT = [20000, 50000, 100000, 200000];
 
+/** Multiplicador do intervalo entre tiros inimigos (>1 = atira mais devagar). */
+export function fireIntervalScale(stageIndex, loop, runT) {
+  let s = 1;
+  if (loop === 0 && stageIndex === 0) s *= 2.2;
+  if (loop === 0 && runT < 90) s *= 1.4;
+  if (loop === 0 && runT < 50) s *= 1.2;
+  return s;
+}
+
+export function vespaFires(stageIndex, loop, phase) {
+  if (loop === 0 && stageIndex === 0) return phase % 3 === 0;
+  return true;
+}
+
+export function softenShot(kind, shot, stageIndex, loop) {
+  if (!(loop === 0 && stageIndex === 0)) return shot;
+  if (kind === "gaviao" || kind === "as" || kind === "bufalo") return "down";
+  return shot;
+}
+
 export function clamp(v, a, b) {
   return v < a ? a : v > b ? b : v;
 }

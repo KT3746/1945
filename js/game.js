@@ -22,18 +22,21 @@ import {
   PICKUPS,
   STAGE_META,
   BOSS_NAMES,
+  fireIntervalScale,
+  vespaFires,
+  softenShot,
 } from "./core.js";
 import { STAGES } from "./stages.js";
 import { FX } from "./particles.js";
 import { STORAGE_HIGH } from "./version.js";
 
 const KIND = {
-  vespa: { hp: 2, r: 10, speed: 78, score: 120, fire: 1.6, shot: "down" },
-  gaviao: { hp: 3, r: 11, speed: 130, score: 220, fire: 1.3, shot: "aim" },
-  bufalo: { hp: 10, r: 16, speed: 48, score: 400, fire: 1.1, shot: "spread" },
-  artilheiro: { hp: 4, r: 11, speed: 62, score: 260, fire: 1.05, shot: "aim" },
-  ninho: { hp: 8, r: 14, speed: 0, score: 350, fire: 1.25, shot: "up" },
-  as: { hp: 6, r: 12, speed: 90, score: 600, fire: 0.9, shot: "aim", drop: true },
+  vespa: { hp: 2, r: 10, speed: 72, score: 120, fire: 2.6, shot: "down" },
+  gaviao: { hp: 3, r: 11, speed: 124, score: 220, fire: 1.85, shot: "aim" },
+  bufalo: { hp: 10, r: 16, speed: 48, score: 400, fire: 1.55, shot: "spread" },
+  artilheiro: { hp: 4, r: 11, speed: 58, score: 260, fire: 1.7, shot: "aim" },
+  ninho: { hp: 8, r: 14, speed: 0, score: 350, fire: 1.7, shot: "up" },
+  as: { hp: 6, r: 12, speed: 86, score: 600, fire: 1.5, shot: "aim", drop: true },
 };
 
 const BOSS = {
@@ -73,6 +76,7 @@ export class Game {
     this.bannerT = 0;
     this.cleared = false;
     this.introT = 0;
+    this.runT = 0;
     this.player = this._player();
     this.enemies = pool();
     this.pBullets = pool();
@@ -139,6 +143,7 @@ export class Game {
     if (this.bannerT > 0) this.bannerT -= dt;
     const wantBomb = input.consumeBomb();
     if (this.mode !== "playing") return;
+    this.runT += dt;
 
     if (this.introT > 0) this.introT -= dt;
 
@@ -273,9 +278,13 @@ export class Game {
       maxHp: Math.round(k.hp * diff),
       speed: k.speed * (1 + this.loop * 0.08),
       score: k.score,
-      fireCd: 0.4 + phase * 0.12,
-      fireEvery: k.fire / (1 + this.loop * 0.1 + this.stageIndex * 0.04),
-      shot: k.shot,
+      fireCd: 0.8 + phase * 0.18,
+      fireEvery:
+        k.fire *
+        fireIntervalScale(this.stageIndex, this.loop, this.runT) /
+        (1 + this.loop * 0.1 + this.stageIndex * 0.04),
+      shot: softenShot(kind, k.shot, this.stageIndex, this.loop),
+      muteFire: kind === "vespa" && !vespaFires(this.stageIndex, this.loop, phase),
       pattern,
       t: 0,
       phase,
@@ -323,7 +332,7 @@ export class Game {
       bossId: id,
       telegraph: 0,
       attack: null,
-      atkT: 1.4,
+      atkT: this.loop === 0 && this.stageIndex === 0 ? 2.4 : 1.4,
       attacks: b.attacks,
       entered: false,
     };
@@ -382,6 +391,7 @@ export class Game {
 
       if (e.y > 8 && e.y < H - 30 && !e.dead) {
         if (e.boss) continue;
+        if (e.muteFire) continue;
         e.fireCd -= dt;
         if (e.fireCd <= 0) {
           this._enemyFire(e);
@@ -412,7 +422,7 @@ export class Game {
       if (hpRatio < 0.4) poolAtk = e.attacks;
       e.attack = poolAtk[(Math.random() * poolAtk.length) | 0];
       e.telegraph = 0.55;
-      e.atkT = hpRatio < 0.45 ? 0.85 : 1.25;
+      e.atkT = hpRatio < 0.45 ? 0.85 : this.loop === 0 && this.stageIndex === 0 ? 1.7 : 1.25;
       this.audio.warning();
     }
   }
@@ -449,8 +459,10 @@ export class Game {
   }
 
   _enemyFire(e) {
+    if (e.muteFire) return;
     const p = this.player;
-    const spd = 110 + this.stageIndex * 10 + this.loop * 16;
+    const base = this.stageIndex === 0 && this.loop === 0 ? 86 : 110;
+    const spd = base + this.stageIndex * 10 + this.loop * 16;
     if (e.shot === "down") {
       this._ebullet(e.x, e.y + 10, 0, spd);
     } else if (e.shot === "up") {
