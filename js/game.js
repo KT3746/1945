@@ -22,6 +22,7 @@ import {
   PICKUPS,
   STAGE_META,
   BOSS_NAMES,
+  BOSS_META,
   fireIntervalScale,
   vespaFires,
   softenShot,
@@ -73,6 +74,7 @@ export class Game {
     this.pendingBoss = false;
     this.boss = null;
     this.banner = "";
+    this.bannerSub = "";
     this.bannerT = 0;
     this.cleared = false;
     this.introT = 0;
@@ -121,6 +123,7 @@ export class Game {
     const meta = STAGE_META[this.stageIndex];
     const loop = this.loop ? ` · ciclo ${this.loop + 1}` : "";
     this.banner = `${meta.name}${loop}`;
+    this.bannerSub = meta.subtitle;
     this.bannerT = 2.4;
     this.waveT = 0;
     this.waveI = 0;
@@ -340,6 +343,7 @@ export class Game {
     this.boss = e;
     this.audio.warning();
     this.banner = BOSS_NAMES[id];
+    this.bannerSub = (BOSS_META[id] && BOSS_META[id].subtitle) || "Chefe à frente.";
     this.bannerT = 2.2;
   }
 

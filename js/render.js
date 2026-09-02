@@ -1,5 +1,5 @@
 /** Fundo em camadas, entidades e suco visual. */
-import { W, H, PICKUP_LABEL, STAGE_META } from "./core.js";
+import { W, H, PICKUP_LABEL } from "./core.js";
 import { bakeSprites, drawProp } from "./sprites.js";
 
 const PAL = {
@@ -283,8 +283,7 @@ export class Renderer {
     ctx.fillText(game.banner, W / 2, y + 26);
     ctx.fillStyle = "#f4f7fa";
     ctx.font = "700 12px Barlow, sans-serif";
-    const meta = STAGE_META[game.stageIndex];
-    ctx.fillText(meta.subtitle, W / 2, y + 46);
+    ctx.fillText(game.bannerSub || "", W / 2, y + 46);
     ctx.restore();
   }
 
@@ -304,12 +303,27 @@ export class Renderer {
     ctx.font = "700 13px Oswald, sans-serif";
     ctx.textAlign = "left";
     ctx.fillText(String(game.score).padStart(6, "0"), 10, 18);
+    const lives = Math.max(0, game.lives | 0);
     ctx.fillStyle = "#c9d4e0";
-    ctx.font = "600 10px Barlow, sans-serif";
-    ctx.fillText("vidas", 10, H - 14);
-    for (let i = 0; i < Math.max(0, game.lives); i++) {
-      ctx.drawImage(this.sprites.player, 42 + i * 16, H - 28, 14, 18);
+    ctx.font = "700 11px Barlow, sans-serif";
+    ctx.fillText(`vidas ${lives}`, 10, H - 14);
+    ctx.fillStyle = "#e0b84a";
+    const iconN = Math.min(lives, 5);
+    for (let i = 0; i < iconN; i++) {
+      const x = 72 + i * 13;
+      const y = H - 19;
+      ctx.beginPath();
+      ctx.moveTo(x, y - 7);
+      ctx.lineTo(x + 5, y + 1);
+      ctx.lineTo(x + 1.4, y + 1);
+      ctx.lineTo(x + 1.4, y + 6);
+      ctx.lineTo(x - 1.4, y + 6);
+      ctx.lineTo(x - 1.4, y + 1);
+      ctx.lineTo(x - 5, y + 1);
+      ctx.closePath();
+      ctx.fill();
     }
+    ctx.fillStyle = "#c9d4e0";
     ctx.fillText("bombas", 140, H - 14);
     ctx.fillStyle = "#6aa0e8";
     for (let i = 0; i < game.bombs; i++) {

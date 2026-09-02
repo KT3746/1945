@@ -124,10 +124,29 @@ export const STAGE_META = [
   },
 ];
 
-export const BOSS_NAMES = {
-  albatroz: "Albatroz de Ferro",
-  sentinela: "Sentinela do Recife",
-  serpente: "Serpente de Bronze",
-  tempestade: "Olho da Tempestade",
-  nadir: "Couraçado Aéreo Nadir",
+export const BOSS_META = {
+  albatroz: {
+    name: "Albatroz de Ferro",
+    subtitle: "Hidroavião pesado. Espere o brilho das asas.",
+  },
+  sentinela: {
+    name: "Sentinela do Recife",
+    subtitle: "Torre voadora. As linhas de fogo avisam.",
+  },
+  serpente: {
+    name: "Serpente de Bronze",
+    subtitle: "Corpo longo. O anel deixa uma fresta.",
+  },
+  tempestade: {
+    name: "Olho da Tempestade",
+    subtitle: "Gira e varre. Saia do feixe dourado.",
+  },
+  nadir: {
+    name: "Couraçado Aéreo Nadir",
+    subtitle: "O horizonte fecha. Todas as armas.",
+  },
 };
+
+export const BOSS_NAMES = Object.fromEntries(
+  Object.entries(BOSS_META).map(([id, b]) => [id, b.name])
+);

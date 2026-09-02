@@ -9,6 +9,9 @@ import {
   fireIntervalScale,
   vespaFires,
   softenShot,
+  BOSS_META,
+  BOSS_NAMES,
+  STAGE_META,
 } from "../js/core.js";
 
 test("clamp limita o valor", () => {
@@ -56,4 +59,14 @@ test("tiros mirados viram tiro reto no Mar de Vidro", () => {
   assert.equal(softenShot("gaviao", "aim", 0, 0), "down");
   assert.equal(softenShot("bufalo", "spread", 0, 0), "down");
   assert.equal(softenShot("gaviao", "aim", 2, 0), "aim");
+});
+
+test("chefes têm nome e subtítulo próprios", () => {
+  const stageSubs = new Set(STAGE_META.map((s) => s.subtitle));
+  for (const id of Object.keys(BOSS_NAMES)) {
+    assert.ok(BOSS_META[id].name);
+    assert.ok(BOSS_META[id].subtitle.length > 8);
+    assert.equal(BOSS_META[id].name, BOSS_NAMES[id]);
+    assert.equal(stageSubs.has(BOSS_META[id].subtitle), false);
+  }
 });
