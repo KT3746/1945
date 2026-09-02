@@ -449,6 +449,8 @@ button.linkish {
   }
   .foot {
     display: none !important;
+    visibility: hidden;
+    pointer-events: none;
   }
   .topbar {
     grid-template-columns: 1fr auto;
