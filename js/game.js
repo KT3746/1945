@@ -1,0 +1,683 @@
+/**
+ * Simulação do Céu de Aço: jogador, ondas, chefes, tiros, bônus e colisões.
+ */
+import {
+  W,
+  H,
+  PLAYER_SPEED,
+  PLAYER_HIT_R,
+  PLAYER_FIRE,
+  PLAYER_FIRE_RAPID,
+  INVULN_TIME,
+  COMBO_WINDOW,
+  START_LIVES,
+  START_BOMBS,
+  MAX_SPREAD,
+  MAX_BOMBS,
+  clamp,
+  circleHit,
+  angleTo,
+  scoreKill,
+  extraLifeEarned,
+  PICKUPS,
+  STAGE_META,
+  BOSS_NAMES,
+} from "./core.js";
+import { STAGES } from "./stages.js";
+import { FX } from "./particles.js";
+import { STORAGE_HIGH } from "./version.js";
+
+const KIND = {
+  vespa: { hp: 2, r: 10, speed: 78, score: 120, fire: 1.6, shot: "down" },
+  gaviao: { hp: 3, r: 11, speed: 130, score: 220, fire: 1.3, shot: "aim" },
+  bufalo: { hp: 10, r: 16, speed: 48, score: 400, fire: 1.1, shot: "spread" },
+  artilheiro: { hp: 4, r: 11, speed: 62, score: 260, fire: 1.05, shot: "aim" },
+  ninho: { hp: 8, r: 14, speed: 0, score: 350, fire: 1.25, shot: "up" },
+  as: { hp: 6, r: 12, speed: 90, score: 600, fire: 0.9, shot: "aim", drop: true },
+};
+
+const BOSS = {
+  albatroz: { hp: 90, r: 28, score: 5000, attacks: ["spread", "aimed", "rain"] },
+  sentinela: { hp: 120, r: 30, score: 7000, attacks: ["aimed", "ring", "sweep"] },
+  serpente: { hp: 140, r: 26, score: 8500, attacks: ["spread", "ring", "rain"] },
+  tempestade: { hp: 160, r: 32, score: 10000, attacks: ["ring", "aimed", "sweep"] },
+  nadir: { hp: 220, r: 36, score: 15000, attacks: ["spread", "aimed", "ring", "rain", "sweep"] },
+};
+
+function pool() {
+  return [];
+}
+
+export class Game {
+  constructor(audio) {
+    this.audio = audio;
+    this.fx = new FX();
+    this.mode = "title";
+    this.high = Number(localStorage.getItem(STORAGE_HIGH) || 0);
+    this.resetRun();
+  }
+
+  resetRun() {
+    this.score = 0;
+    this.lives = START_LIVES;
+    this.bombs = START_BOMBS;
+    this.stageIndex = 0;
+    this.loop = 0;
+    this.combo = 0;
+    this.comboT = 0;
+    this.waveT = 0;
+    this.waveI = 0;
+    this.pendingBoss = false;
+    this.boss = null;
+    this.banner = "";
+    this.bannerT = 0;
+    this.cleared = false;
+    this.introT = 0;
+    this.player = this._player();
+    this.enemies = pool();
+    this.pBullets = pool();
+    this.eBullets = pool();
+    this.pickups = pool();
+    this.bgScroll = 0;
+    this.fx.reset();
+  }
+
+  _player() {
+    return {
+      x: W / 2,
+      y: H - 78,
+      fireCd: 0,
+      spread: 1,
+      rapidT: 0,
+      spreadT: 0,
+      shield: 0,
+      invuln: 0,
+      alive: true,
+    };
+  }
+
+  start(fromStage = 0) {
+    this.resetRun();
+    this.stageIndex = clamp(fromStage, 0, STAGES.length - 1);
+    this.mode = "playing";
+    this.introT = 2.2;
+    this._announceStage();
+    this.spawnPlayer();
+  }
+
+  spawnPlayer() {
+    this.player.x = W / 2;
+    this.player.y = H - 78;
+    this.player.invuln = INVULN_TIME;
+    this.player.alive = true;
+    this.player.fireCd = 0.2;
+  }
+
+  _announceStage() {
+    const meta = STAGE_META[this.stageIndex];
+    const loop = this.loop ? ` · ciclo ${this.loop + 1}` : "";
+    this.banner = `${meta.name}${loop}`;
+    this.bannerT = 2.4;
+    this.waveT = 0;
+    this.waveI = 0;
+    this.pendingBoss = false;
+    this.boss = null;
+    this.cleared = false;
+  }
+
+  pause() {
+    if (this.mode === "playing") this.mode = "paused";
+  }
+
+  resume() {
+    if (this.mode === "paused") this.mode = "playing";
+  }
+
+  update(dt, input) {
+    this.bgScroll += dt * this._scrollSpeed();
+    this.fx.update(dt);
+    if (this.bannerT > 0) this.bannerT -= dt;
+    const wantBomb = input.consumeBomb();
+    if (this.mode !== "playing") return;
+
+    if (this.introT > 0) this.introT -= dt;
+
+    const p = this.player;
+    if (p.alive) {
+      p.x = clamp(p.x + input.moveX * PLAYER_SPEED * dt, 16, W - 16);
+      p.y = clamp(p.y + input.moveY * PLAYER_SPEED * dt, 40, H - 28);
+      p.invuln = Math.max(0, p.invuln - dt);
+      p.rapidT = Math.max(0, p.rapidT - dt);
+      p.spreadT = Math.max(0, p.spreadT - dt);
+      if (p.spreadT <= 0) p.spread = 1;
+      p.fireCd -= dt;
+      if (input.fireHeld && p.fireCd <= 0) {
+        this._playerShoot();
+        p.fireCd = p.rapidT > 0 ? PLAYER_FIRE_RAPID : PLAYER_FIRE;
+        this.audio.shoot();
+      }
+      if (wantBomb) this._bomb();
+      if (Math.random() < dt * 28) this.fx.trail(p.x + (Math.random() - 0.5) * 8, p.y + 16);
+    }
+
+    this.comboT -= dt;
+    if (this.comboT <= 0) this.combo = 0;
+
+    this._director(dt);
+    this._updateEnemies(dt);
+    this._updateBullets(dt);
+    this._updatePickups(dt);
+    this._collide();
+    this._checkStage();
+  }
+
+  _scrollSpeed() {
+    const pal = STAGE_META[this.stageIndex].palette;
+    if (pal === "storm") return 92;
+    if (pal === "fortress") return 70;
+    return 58 + this.stageIndex * 6 + this.loop * 8;
+  }
+
+  _playerShoot() {
+    const p = this.player;
+    const n = p.spreadT > 0 ? Math.max(p.spread, 3) : p.spread;
+    const shots = n >= 5 ? 5 : n >= 3 ? 3 : 1;
+    const speed = 420;
+    if (shots === 1) this._pbullet(p.x, p.y - 18, 0, -speed);
+    else if (shots === 3) {
+      this._pbullet(p.x, p.y - 18, 0, -speed);
+      this._pbullet(p.x - 8, p.y - 12, -90, -speed + 10);
+      this._pbullet(p.x + 8, p.y - 12, 90, -speed + 10);
+    } else {
+      for (let i = -2; i <= 2; i++) {
+        this._pbullet(p.x + i * 6, p.y - 16, i * 70, -speed + Math.abs(i) * 12);
+      }
+    }
+  }
+
+  _pbullet(x, y, vx, vy) {
+    this.pBullets.push({ x, y, vx, vy, r: 3.2, dmg: 1 });
+  }
+
+  _ebullet(x, y, vx, vy, r = 3.4) {
+    this.eBullets.push({ x, y, vx, vy, r });
+  }
+
+  _bomb() {
+    if (this.bombs <= 0 || !this.player.alive) return;
+    this.bombs--;
+    this.audio.bigBoom();
+    this.fx.boom(this.player.x, this.player.y, 40, "#9ad4ff");
+    this.fx.shake = 10;
+    this.eBullets.length = 0;
+    for (const e of this.enemies) {
+      if (e.dead) continue;
+      e.hp -= 18;
+      e.flash = 0.18;
+      if (e.hp <= 0) this._kill(e, true);
+    }
+  }
+
+  _director(dt) {
+    if (this.cleared || this.pendingBoss) return;
+    this.waveT += dt;
+    const script = STAGES[this.stageIndex].waves;
+    while (this.waveI < script.length && script[this.waveI].at <= this.waveT) {
+      const ev = script[this.waveI++];
+      this._spawnEvent(ev);
+    }
+  }
+
+  _spawnEvent(ev) {
+    const diff = 1 + this.stageIndex * 0.08 + this.loop * 0.22;
+    if (ev.spawn === "line") {
+      for (let i = 0; i < ev.n; i++) {
+        this._enemy(ev.kind, ev.x0 + i * ev.gap, -18 - i * 10, ev.pattern, diff, i);
+      }
+    } else if (ev.spawn === "v") {
+      const mid = (ev.n - 1) / 2;
+      for (let i = 0; i < ev.n; i++) {
+        const d = Math.abs(i - mid);
+        this._enemy(ev.kind, W / 2 + (i - mid) * 36, -20 - d * 16, "down", diff, i);
+      }
+    } else if (ev.spawn === "swoop") {
+      for (let i = 0; i < ev.n; i++) {
+        const left = ev.side === "left";
+        this._enemy(ev.kind, left ? -20 : W + 20, 40 + i * 22, "swoop", diff, i, {
+          sx: left ? -20 : W + 20,
+          sy: 50 + i * 18,
+          ex: left ? W + 30 : -30,
+          ey: 220 + i * 20,
+        });
+      }
+    } else if (ev.spawn === "single") {
+      this._enemy(ev.kind, ev.x, -24, ev.pattern || "down", diff, 0);
+    } else if (ev.spawn === "ground") {
+      this._enemy("ninho", ev.x, 8, "ground", diff, 0, { gy: 86 + (ev.x % 40) });
+    } else if (ev.spawn === "boss") {
+      this.pendingBoss = true;
+    }
+  }
+
+  _enemy(kind, x, y, pattern, diff, phase, extra = {}) {
+    const k = KIND[kind];
+    const e = {
+      kind,
+      x,
+      y,
+      homeX: x,
+      vx: 0,
+      vy: 0,
+      r: k.r,
+      hp: Math.round(k.hp * diff),
+      maxHp: Math.round(k.hp * diff),
+      speed: k.speed * (1 + this.loop * 0.08),
+      score: k.score,
+      fireCd: 0.4 + phase * 0.12,
+      fireEvery: k.fire / (1 + this.loop * 0.1 + this.stageIndex * 0.04),
+      shot: k.shot,
+      pattern,
+      t: 0,
+      phase,
+      flash: 0,
+      dead: false,
+      drop: k.drop ? PICKUPS[phase % PICKUPS.length] : null,
+      boss: false,
+      telegraph: 0,
+      attack: null,
+      atkT: 1.2,
+      gy: extra.gy || 90,
+      sx: extra.sx,
+      sy: extra.sy,
+      ex: extra.ex,
+      ey: extra.ey,
+    };
+    this.enemies.push(e);
+    return e;
+  }
+
+  _spawnBoss() {
+    const id = STAGES[this.stageIndex].boss;
+    const b = BOSS[id];
+    const diff = 1 + this.loop * 0.35;
+    const e = {
+      kind: id,
+      x: W / 2,
+      y: -40,
+      homeX: W / 2,
+      r: b.r,
+      hp: Math.round(b.hp * diff),
+      maxHp: Math.round(b.hp * diff),
+      speed: 40,
+      score: b.score,
+      fireCd: 0,
+      fireEvery: 1.1,
+      shot: "boss",
+      pattern: "boss",
+      t: 0,
+      phase: 0,
+      flash: 0,
+      dead: false,
+      drop: "medal",
+      boss: true,
+      bossId: id,
+      telegraph: 0,
+      attack: null,
+      atkT: 1.4,
+      attacks: b.attacks,
+      entered: false,
+    };
+    this.enemies.push(e);
+    this.boss = e;
+    this.audio.warning();
+    this.banner = BOSS_NAMES[id];
+    this.bannerT = 2.2;
+  }
+
+  _updateEnemies(dt) {
+    const p = this.player;
+    for (let i = this.enemies.length - 1; i >= 0; i--) {
+      const e = this.enemies[i];
+      if (e.dead) {
+        this.enemies.splice(i, 1);
+        continue;
+      }
+      e.t += dt;
+      e.flash = Math.max(0, e.flash - dt);
+      if (e.pattern === "down") {
+        e.y += e.speed * dt;
+        e.x = e.homeX + Math.sin(e.t * 2.2 + e.phase) * 18;
+      } else if (e.pattern === "sine") {
+        e.y += e.speed * dt;
+        e.x = e.homeX + Math.sin(e.t * 3 + e.phase) * 54;
+      } else if (e.pattern === "aim") {
+        e.y += e.speed * 0.7 * dt;
+        e.x = e.homeX + Math.sin(e.t * 1.4) * 40;
+      } else if (e.pattern === "hover") {
+        if (e.y < 120) e.y += e.speed * dt;
+        else e.x = e.homeX + Math.sin(e.t * 1.3) * 80;
+      } else if (e.pattern === "dive") {
+        if (e.y < 160) e.y += e.speed * dt;
+        else {
+          const a = angleTo(e.x, e.y, p.x, p.y);
+          e.x += Math.cos(a) * e.speed * 1.35 * dt;
+          e.y += Math.sin(a) * e.speed * 1.35 * dt;
+        }
+      } else if (e.pattern === "swoop") {
+        const u = Math.min(1, e.t / 2.4);
+        e.x = e.sx + (e.ex - e.sx) * u;
+        e.y = e.sy + (e.ey - e.sy) * u + Math.sin(u * Math.PI) * 90;
+        if (u >= 1) e.dead = true;
+      } else if (e.pattern === "ground") {
+        if (e.y < e.gy) e.y += 50 * dt;
+        else e.y = e.gy;
+      } else if (e.pattern === "boss") {
+        this._bossAI(e, dt);
+      }
+
+      if (!e.boss && (e.y > H + 50 || e.x < -70 || e.x > W + 70)) {
+        e.dead = true;
+        continue;
+      }
+
+      if (e.y > 8 && e.y < H - 30 && !e.dead) {
+        if (e.boss) continue;
+        e.fireCd -= dt;
+        if (e.fireCd <= 0) {
+          this._enemyFire(e);
+          e.fireCd = e.fireEvery;
+        }
+      }
+    }
+  }
+
+  _bossAI(e, dt) {
+    if (e.y < 96) {
+      e.y += 55 * dt;
+      return;
+    }
+    e.entered = true;
+    e.x = e.homeX + Math.sin(e.t * 0.65) * (e.kind === "serpente" ? 110 : 88);
+    if (e.kind === "serpente") e.y = 96 + Math.sin(e.t * 1.1) * 18;
+
+    if (e.telegraph > 0) {
+      e.telegraph -= dt;
+      if (e.telegraph <= 0) this._bossAttack(e);
+      return;
+    }
+    e.atkT -= dt;
+    if (e.atkT <= 0) {
+      const hpRatio = e.hp / e.maxHp;
+      let poolAtk = e.attacks;
+      if (hpRatio < 0.4) poolAtk = e.attacks;
+      e.attack = poolAtk[(Math.random() * poolAtk.length) | 0];
+      e.telegraph = 0.55;
+      e.atkT = hpRatio < 0.45 ? 0.85 : 1.25;
+      this.audio.warning();
+    }
+  }
+
+  _bossAttack(e) {
+    const p = this.player;
+    const spd = 120 + this.loop * 18 + this.stageIndex * 6;
+    if (e.attack === "spread") {
+      for (let i = -4; i <= 4; i++) {
+        this._ebullet(e.x, e.y + 16, i * 38, spd);
+      }
+    } else if (e.attack === "aimed") {
+      const a = angleTo(e.x, e.y, p.x, p.y);
+      for (let i = -1; i <= 1; i++) {
+        const ang = a + i * 0.18;
+        this._ebullet(e.x, e.y + 10, Math.cos(ang) * (spd + 30), Math.sin(ang) * (spd + 30));
+      }
+    } else if (e.attack === "ring") {
+      for (let i = 0; i < 14; i++) {
+        if (i === 3 || i === 10) continue;
+        const a = (i / 14) * Math.PI * 2 + e.t;
+        this._ebullet(e.x, e.y, Math.cos(a) * spd, Math.sin(a) * spd, 3.8);
+      }
+    } else if (e.attack === "rain") {
+      for (let i = 0; i < 8; i++) {
+        this._ebullet(30 + i * 42, 8, 0, spd * 0.85);
+      }
+    } else if (e.attack === "sweep") {
+      for (let i = 0; i < 7; i++) {
+        const a = 0.35 + i * 0.18;
+        this._ebullet(e.x, e.y + 12, Math.cos(a) * spd, Math.sin(a) * spd);
+      }
+    }
+  }
+
+  _enemyFire(e) {
+    const p = this.player;
+    const spd = 110 + this.stageIndex * 10 + this.loop * 16;
+    if (e.shot === "down") {
+      this._ebullet(e.x, e.y + 10, 0, spd);
+    } else if (e.shot === "up") {
+      const a = angleTo(e.x, e.y, p.x, p.y);
+      this._ebullet(e.x, e.y - 6, Math.cos(a) * spd, Math.sin(a) * spd);
+    } else if (e.shot === "aim") {
+      const a = angleTo(e.x, e.y, p.x, p.y);
+      this._ebullet(e.x, e.y + 8, Math.cos(a) * spd, Math.sin(a) * spd);
+    } else if (e.shot === "spread") {
+      this._ebullet(e.x - 10, e.y + 10, -30, spd);
+      this._ebullet(e.x, e.y + 12, 0, spd);
+      this._ebullet(e.x + 10, e.y + 10, 30, spd);
+    }
+    if (e.kind !== "vespa" || (e.phase & 1) === 0) this.audio.enemyShot();
+  }
+
+  _updateBullets(dt) {
+    for (let i = this.pBullets.length - 1; i >= 0; i--) {
+      const b = this.pBullets[i];
+      b.x += b.vx * dt;
+      b.y += b.vy * dt;
+      if (b.y < -10 || b.x < -10 || b.x > W + 10) this.pBullets.splice(i, 1);
+    }
+    for (let i = this.eBullets.length - 1; i >= 0; i--) {
+      const b = this.eBullets[i];
+      b.x += b.vx * dt;
+      b.y += b.vy * dt;
+      if (b.y > H + 12 || b.y < -20 || b.x < -16 || b.x > W + 16) this.eBullets.splice(i, 1);
+    }
+    if (this.eBullets.length > 240) this.eBullets.splice(0, 50);
+    if (this.pBullets.length > 120) this.pBullets.splice(0, 20);
+  }
+
+  _updatePickups(dt) {
+    for (let i = this.pickups.length - 1; i >= 0; i--) {
+      const u = this.pickups[i];
+      u.t += dt;
+      u.y += 42 * dt;
+      u.x += Math.sin(u.t * 3) * 18 * dt;
+      if (u.y > H + 20) this.pickups.splice(i, 1);
+    }
+  }
+
+  _collide() {
+    const p = this.player;
+    for (let i = this.pBullets.length - 1; i >= 0; i--) {
+      const b = this.pBullets[i];
+      let hit = false;
+      for (const e of this.enemies) {
+        if (e.dead) continue;
+        if (circleHit(b.x, b.y, b.r, e.x, e.y, e.r)) {
+          e.hp -= b.dmg;
+          e.flash = 0.08;
+          hit = true;
+          if (e.hp <= 0) this._kill(e, false);
+          break;
+        }
+      }
+      if (hit) this.pBullets.splice(i, 1);
+    }
+
+    if (!p.alive) return;
+
+    const vulnerable = p.invuln <= 0;
+    if (vulnerable) {
+      for (let i = this.eBullets.length - 1; i >= 0; i--) {
+        const b = this.eBullets[i];
+        if (circleHit(p.x, p.y, PLAYER_HIT_R, b.x, b.y, b.r)) {
+          this.eBullets.splice(i, 1);
+          this._playerHit();
+          if (!p.alive) return;
+          break;
+        }
+      }
+      for (const e of this.enemies) {
+        if (e.dead) continue;
+        if (circleHit(p.x, p.y, PLAYER_HIT_R, e.x, e.y, e.r * 0.78)) {
+          this._playerHit();
+          if (!p.alive) return;
+          break;
+        }
+      }
+    }
+
+    for (let i = this.pickups.length - 1; i >= 0; i--) {
+      const u = this.pickups[i];
+      if (circleHit(p.x, p.y, 16, u.x, u.y, 12)) {
+        this._applyPickup(u.kind, u.x, u.y);
+        this.pickups.splice(i, 1);
+      }
+    }
+  }
+
+  _kill(e, fromBomb) {
+    e.dead = true;
+    this.fx.boom(e.x, e.y, e.boss ? 42 : 16, e.boss ? "#e0b84a" : "#e8c070");
+    this.audio.explosion();
+    this.combo += 1;
+    this.comboT = COMBO_WINDOW;
+    const pts = scoreKill(e.score, this.combo, this.loop);
+    this._addScore(pts);
+    this.fx.floatText(e.x, e.y - 10, `+${pts}`, this.combo > 3 ? "#ff9a4a" : "#ffe08a");
+    if (this.combo >= 4) this.fx.floatText(e.x, e.y - 24, `COMBO x${this.combo}`, "#fff");
+    if (e.drop) this.pickups.push({ x: e.x, y: e.y, kind: e.drop, t: 0 });
+    else if (!fromBomb && Math.random() < 0.08) {
+      this.pickups.push({
+        x: e.x,
+        y: e.y,
+        kind: PICKUPS[(Math.random() * PICKUPS.length) | 0],
+        t: 0,
+      });
+    }
+    if (e.boss) {
+      this.boss = null;
+      this.pendingBoss = false;
+      this.cleared = true;
+    }
+  }
+
+  _playerHit() {
+    const p = this.player;
+    if (p.invuln > 0) return;
+    if (p.shield > 0) {
+      p.shield--;
+      p.invuln = 0.8;
+      this.fx.boom(p.x, p.y, 10, "#9ad4ff");
+      this.audio.hit();
+      this.fx.floatText(p.x, p.y - 16, "ESCUDO", "#9ad4ff");
+      return;
+    }
+    this.lives--;
+    this.audio.hurt();
+    this.fx.playerHurt();
+    this.fx.boom(p.x, p.y, 22, "#e85d4c");
+    p.spread = 1;
+    p.spreadT = 0;
+    p.rapidT = 0;
+    if (this.lives <= 0) {
+      this.lives = 0;
+      p.alive = false;
+      this.mode = "gameover";
+      this._saveHigh();
+      this.audio.gameover();
+      return;
+    }
+    this.spawnPlayer();
+  }
+
+  _applyPickup(kind, x, y) {
+    const p = this.player;
+    this.audio.pickup();
+    if (kind === "spread") {
+      p.spread = Math.min(MAX_SPREAD, p.spread + 2);
+      p.spreadT = 12;
+      this.fx.floatText(x, y, "LEQUE", "#ffd36a");
+    } else if (kind === "rapid") {
+      p.rapidT = 10;
+      this.fx.floatText(x, y, "RAJADA", "#ff9a4a");
+    } else if (kind === "shield") {
+      p.shield = Math.min(3, p.shield + 1);
+      this.fx.floatText(x, y, "ESCUDO", "#9ad4ff");
+    } else if (kind === "bomb") {
+      this.bombs = Math.min(MAX_BOMBS, this.bombs + 1);
+      this.fx.floatText(x, y, "BOMBA", "#9ad4ff");
+    } else {
+      this._addScore(1000);
+      this.fx.floatText(x, y, "+1000", "#ffe08a");
+    }
+  }
+
+  _addScore(n) {
+    const prev = this.score;
+    this.score += n;
+    const extra = extraLifeEarned(prev, this.score);
+    if (extra) {
+      this.lives += extra;
+      this.audio.extraLife();
+      this.fx.floatText(this.player.x, this.player.y - 28, "VIDA +1", "#7dce9a");
+    }
+    if (this.score > this.high) {
+      this.high = this.score;
+      this._saveHigh();
+    }
+  }
+
+  _saveHigh() {
+    localStorage.setItem(STORAGE_HIGH, String(this.high | 0));
+  }
+
+  _checkStage() {
+    const script = STAGES[this.stageIndex].waves;
+    if (this.waveI < script.length) return;
+    const alive = this.enemies.some((e) => !e.dead);
+    if (this.pendingBoss && !this.boss && !alive) {
+      this._spawnBoss();
+      return;
+    }
+    if (!this.pendingBoss && !alive && this.eBullets.length < 4) {
+      this.cleared = true;
+    }
+    if (this.cleared && !alive) {
+      this.mode = "stageclear";
+      this.audio.stage();
+      this._saveHigh();
+    }
+  }
+
+  nextStage() {
+    this.enemies.length = 0;
+    this.eBullets.length = 0;
+    this.pBullets.length = 0;
+    this.pickups.length = 0;
+    this.boss = null;
+    this.pendingBoss = false;
+    this.cleared = false;
+    this.stageIndex++;
+    if (this.stageIndex >= STAGES.length) {
+      this.stageIndex = 0;
+      this.loop++;
+    }
+    this.mode = "playing";
+    this.introT = 1.8;
+    this.player.invuln = 1.4;
+    this._announceStage();
+  }
+
+  palette() {
+    return STAGE_META[this.stageIndex].palette;
+  }
+}
