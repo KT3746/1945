@@ -59,9 +59,9 @@ export class Renderer {
       this._player(ctx, game);
       this._bullets(ctx, game);
       game.fx.draw(ctx);
-      this._banner(ctx, game);
       this._combo(ctx, game);
       this._hud(ctx, game);
+      this._banner(ctx, game);
     }
     ctx.restore();
 
@@ -264,35 +264,27 @@ export class Renderer {
   _banner(ctx, game) {
     if (game.bannerT <= 0) return;
     const fade = game.bannerT > 0.4 ? 1 : Math.max(0, game.bannerT / 0.4);
-    const x = 14;
-    const y = 38;
-    const w = W - 28;
-    const h = 56;
-    const r = 10;
+    const x = 12;
+    const y = 26;
+    const w = W - 24;
+    const h = 58;
     ctx.save();
     ctx.globalAlpha = fade;
-    ctx.fillStyle = "rgba(6, 16, 28, 0.94)";
-    ctx.beginPath();
-    ctx.moveTo(x + r, y);
-    ctx.arcTo(x + w, y, x + w, y + h, r);
-    ctx.arcTo(x + w, y + h, x, y + h, r);
-    ctx.arcTo(x, y + h, x, y, r);
-    ctx.arcTo(x, y, x + w, y, r);
-    ctx.closePath();
-    ctx.fill();
+    ctx.fillStyle = "#061018";
+    ctx.fillRect(x, y, w, h);
+    ctx.fillStyle = "#0c2230";
+    ctx.fillRect(x + 3, y + 3, w - 6, h - 6);
     ctx.strokeStyle = "#e0b84a";
     ctx.lineWidth = 2;
-    ctx.stroke();
-    ctx.shadowColor = "#000";
-    ctx.shadowBlur = 10;
+    ctx.strokeRect(x + 1.5, y + 1.5, w - 3, h - 3);
     ctx.fillStyle = "#ffe7b3";
     ctx.font = "700 18px Oswald, sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText(game.banner, W / 2, y + 24);
-    ctx.fillStyle = "#e8f0f6";
+    ctx.fillText(game.banner, W / 2, y + 26);
+    ctx.fillStyle = "#f4f7fa";
     ctx.font = "700 12px Barlow, sans-serif";
     const meta = STAGE_META[game.stageIndex];
-    ctx.fillText(meta.subtitle, W / 2, y + 44);
+    ctx.fillText(meta.subtitle, W / 2, y + 46);
     ctx.restore();
   }
 

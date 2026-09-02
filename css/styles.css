@@ -435,6 +435,11 @@ button.linkish {
   color: #9bb0c088;
 }
 
+.eyebrow #title-ver {
+  color: var(--muted);
+  letter-spacing: 0.08em;
+}
+
 @media (max-width: 720px), (pointer: coarse) {
   .touch {
     display: flex;
@@ -443,7 +448,7 @@ button.linkish {
     display: none;
   }
   .foot {
-    display: none;
+    display: none !important;
   }
   .topbar {
     grid-template-columns: 1fr auto;

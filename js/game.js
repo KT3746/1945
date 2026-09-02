@@ -276,7 +276,7 @@ export class Game {
       r: k.r,
       hp: Math.round(k.hp * diff),
       maxHp: Math.round(k.hp * diff),
-      speed: k.speed * (1 + this.loop * 0.08),
+      speed: k.speed * (1 + this.loop * 0.08) * (this.loop === 0 && this.stageIndex === 0 ? 0.84 : 1),
       score: k.score,
       fireCd: 0.8 + phase * 0.18,
       fireEvery:
@@ -357,8 +357,9 @@ export class Game {
         e.y += e.speed * dt;
         e.x = e.homeX + Math.sin(e.t * 2.2 + e.phase) * 18;
       } else if (e.pattern === "sine") {
+        const amp = this.stageIndex === 0 && this.loop === 0 ? 26 : 54;
         e.y += e.speed * dt;
-        e.x = e.homeX + Math.sin(e.t * 3 + e.phase) * 54;
+        e.x = e.homeX + Math.sin(e.t * 3 + e.phase) * amp;
       } else if (e.pattern === "aim") {
         e.y += e.speed * 0.7 * dt;
         e.x = e.homeX + Math.sin(e.t * 1.4) * 40;
