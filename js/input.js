@@ -6,6 +6,7 @@ export class Input {
     this.moveX = 0;
     this.moveY = 0;
     this.fireHeld = false;
+    this.focusHeld = false;
     this.bombPressed = false;
     this.pausePressed = false;
     this.touchEnabled = false;
@@ -14,9 +15,11 @@ export class Input {
     this._stick = { active: false, x: 0, y: 0, id: null };
     this._fireBtn = false;
     this._bombBtn = false;
+    this._focusBtn = false;
+    this.playLocked = false;
 
-    window.addEventListener("keydown", (e) => this._down(e));
-    window.addEventListener("keyup", (e) => this._up(e));
+    window.addEventListener("keydown", (e) => this._down(e), true);
+    window.addEventListener("keyup", (e) => this._up(e), true);
     window.addEventListener("contextmenu", (e) => {
       if (e.target && (e.target.id === "game" || e.target.closest(".touch"))) {
         e.preventDefault();
@@ -34,15 +37,24 @@ export class Input {
       "Space",
     ];
     if (block.includes(e.code)) e.preventDefault();
+    const onChrome =
+      e.target &&
+      e.target.closest &&
+      e.target.closest("#btn-pause, #btn-mute, #btn-fire, #btn-bomb, #btn-focus");
+    if (onChrome && (e.code === "Space" || e.code === "Enter")) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    if (e.code === "Escape" || e.code === "KeyP") {
+      if (!e.repeat) this.pausePressed = true;
+    }
+    if (this.playLocked) return;
     if (e.repeat) {
       this._keys.add(e.code);
       return;
     }
     this._keys.add(e.code);
-    if (e.code === "KeyX" || e.code === "ShiftLeft" || e.code === "ShiftRight") {
-      this.bombPressed = true;
-    }
-    if (e.code === "Escape" || e.code === "KeyP") this.pausePressed = true;
+    if (e.code === "KeyX") this.bombPressed = true;
   }
 
   _up(e) {
@@ -54,6 +66,7 @@ export class Input {
     const knob = document.getElementById("stick-knob");
     const fire = document.getElementById("btn-fire");
     const bomb = document.getElementById("btn-bomb");
+    const focus = document.getElementById("btn-focus");
     if (!stick) return;
 
     const setFrom = (clientX, clientY) => {
@@ -68,17 +81,24 @@ export class Input {
         dx = (dx / len) * max;
         dy = (dy / len) * max;
       }
-      this._stick.x = dx / max;
-      this._stick.y = dy / max;
-      if (knob) knob.style.transform = `translate(${dx}px, ${dy}px)`;
+      const dead = 0.08;
+      this._stick.x = Math.abs(dx / max) < dead ? 0 : dx / max;
+      this._stick.y = Math.abs(dy / max) < dead ? 0 : dy / max;
+      this._syncKnob();
     };
 
-    const endStick = () => {
+    this._syncKnob = () => {
+      if (!knob) return;
+      const max = stick.getBoundingClientRect().width * 0.38;
+      knob.style.transform = `translate(${this._stick.x * max}px, ${this._stick.y * max}px)`;
+    };
+
+    this._endStick = () => {
       this._stick.active = false;
       this._stick.x = 0;
       this._stick.y = 0;
       this._stick.id = null;
-      if (knob) knob.style.transform = "translate(0,0)";
+      this._syncKnob();
     };
 
     stick.addEventListener("pointerdown", (e) => {
@@ -93,8 +113,22 @@ export class Input {
       if (!this._stick.active || e.pointerId !== this._stick.id) return;
       setFrom(e.clientX, e.clientY);
     });
-    stick.addEventListener("pointerup", endStick);
-    stick.addEventListener("pointercancel", endStick);
+    stick.addEventListener("pointerup", (e) => {
+      if (e.pointerId === this._stick.id) this._endStick();
+    });
+    stick.addEventListener("pointercancel", () => this._endStick());
+    stick.addEventListener("lostpointercapture", () => {
+      if (this._stick.active) this._endStick();
+    });
+    window.addEventListener("pointerup", (e) => {
+      if (this._stick.active && e.pointerId === this._stick.id) this._endStick();
+    });
+    window.addEventListener("pointercancel", () => {
+      if (this._stick.active) this._endStick();
+      this._fireBtn = false;
+      this._bombBtn = false;
+      this._focusBtn = false;
+    });
 
     const hold = (el, setter) => {
       if (!el) return;
@@ -113,6 +147,9 @@ export class Input {
     hold(fire, (v) => {
       this._fireBtn = v;
     });
+    hold(focus, (v) => {
+      this._focusBtn = v;
+    });
     if (bomb) {
       bomb.addEventListener("pointerdown", (e) => {
         e.preventDefault();
@@ -126,7 +163,50 @@ export class Input {
     }
   }
 
+  clearPlay() {
+    this.bombPressed = false;
+    this.fireHeld = false;
+    this._fireBtn = false;
+    this._bombBtn = false;
+    this.moveX = 0;
+    this.moveY = 0;
+    for (const code of [
+      "Space",
+      "KeyZ",
+      "KeyX",
+      "ArrowUp",
+      "ArrowDown",
+      "ArrowLeft",
+      "ArrowRight",
+      "KeyW",
+      "KeyA",
+      "KeyS",
+      "KeyD",
+    ]) {
+      this._keys.delete(code);
+    }
+    if (typeof this._endStick === "function") this._endStick();
+    else {
+      this._stick.active = false;
+      this._stick.x = 0;
+      this._stick.y = 0;
+      this._stick.id = null;
+    }
+  }
+
   poll() {
+    if (!this._stick.active) {
+      this._stick.x = 0;
+      this._stick.y = 0;
+      if (typeof this._syncKnob === "function") this._syncKnob();
+    }
+    if (this.playLocked) {
+      this.moveX = 0;
+      this.moveY = 0;
+      this.fireHeld = false;
+      this.bombPressed = false;
+      return;
+    }
     let x = 0;
     let y = 0;
     if (this._keys.has("ArrowLeft") || this._keys.has("KeyA")) x -= 1;
@@ -148,6 +228,11 @@ export class Input {
       this._fireBtn ||
       this._keys.has("Space") ||
       this._keys.has("KeyZ");
+    this.focusHeld =
+      this._focusBtn ||
+      this._keys.has("ShiftLeft") ||
+      this._keys.has("ShiftRight") ||
+      this._keys.has("KeyC");
   }
 
   consumeBomb() {

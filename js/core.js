@@ -3,17 +3,27 @@
 export const W = 360;
 export const H = 640;
 
-export const PLAYER_SPEED = 248;
+export const PLAYER_SPEED = 332;
+export const FOCUS_SPEED_MUL = 0.42;
 export const PLAYER_HIT_R = 7;
 export const PLAYER_FIRE = 0.15;
 export const PLAYER_FIRE_RAPID = 0.075;
 export const INVULN_TIME = 2.05;
 export const COMBO_WINDOW = 1.25;
 export const START_LIVES = 3;
-export const START_BOMBS = 3;
+export const START_BOMBS = 2;
 export const MAX_SPREAD = 5;
 export const MAX_BOMBS = 9;
+export const ENEMY_BULLET_R = 7;
+export const BOMB_SCORE = 20;
+export const BOMB_DAMAGE = 12;
+export const BOMB_COOLDOWN = 1.05;
+export const EMPTY_FILL_SEC = 3.2;
 export const EXTRA_LIFE_AT = [20000, 50000, 100000, 200000];
+
+export function moveSpeed(focus) {
+  return PLAYER_SPEED * (focus ? FOCUS_SPEED_MUL : 1);
+}
 
 /** Multiplicador do intervalo entre tiros inimigos (>1 = atira mais devagar). */
 export function fireIntervalScale(stageIndex, loop, runT) {
@@ -81,9 +91,11 @@ export function extraLifeEarned(prevScore, nextScore) {
   return EXTRA_LIFE_AT.filter((t) => prevScore < t && nextScore >= t).length;
 }
 
-export const PICKUPS = ["spread", "rapid", "shield", "bomb", "medal"];
+export const PICKUPS = ["shot", "spread", "rapid", "shield", "bomb", "medal"];
+export const WEAPON_DROPS = ["shot", "spread", "rapid"];
 
 export const PICKUP_LABEL = {
+  shot: "TIRO",
   spread: "LEQUE",
   rapid: "RAJADA",
   shield: "ESCUDO",

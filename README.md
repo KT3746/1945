@@ -25,6 +25,7 @@ Cinco estágios — Mar de Vidro, Arquipélago Cinza, Estreito de Bronze, Cânio
 
 | Nome | Efeito |
 | --- | --- |
+| TIRO+ | Tiro mais largo (e visível no chão) |
 | Leque | Tiro em leque |
 | Rajada | Tiro mais rápido |
 | Escudo | Absorve um hit |
@@ -39,12 +40,13 @@ Cinco estágios — Mar de Vidro, Arquipélago Cinza, Estreito de Bronze, Cânio
 | --- | --- |
 | Setas ou `WASD` | Mover |
 | `Espaço` ou `Z` | Atirar (segure) |
-| `X` ou `Shift` | Bomba |
+| `Shift` ou `C` | Foco (voa mais devagar, vê o ponto frágil) |
+| `X` | Bomba |
 | `P` ou `Esc` | Pausar |
 
 ### Celular
 
-Stick à esquerda para voar. **Fogo** e **Bomba** à direita. O primeiro toque também liga o som.
+Stick à esquerda para voar. **Fogo**, **Bomba** e **Foco** à direita. O primeiro toque também liga o som.
 
 ## Som e recorde
 
@@ -83,4 +85,4 @@ npm test
 - `js/ui.js` — telas (título, pausa, vitória, fim)
 - `js/main.js` — liga o loop a 60 fps
 
-Site estático para GitHub Pages (pasta raiz, branch `main`). Os arquivos CSS/JS usam `?v=` para o navegador não ficar com versão velha.
+Site estático para GitHub Pages (pasta raiz, branch `main`). A constante `VERSION` em `js/version.js` é a fonte da verdade: título, rodapé e todos os `?v=` do HTML devem mostrar o mesmo número (agora **1.0.3**).

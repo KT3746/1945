@@ -4,7 +4,6 @@
 import {
   W,
   H,
-  PLAYER_SPEED,
   PLAYER_HIT_R,
   PLAYER_FIRE,
   PLAYER_FIRE_RAPID,
@@ -20,12 +19,19 @@ import {
   scoreKill,
   extraLifeEarned,
   PICKUPS,
+  WEAPON_DROPS,
   STAGE_META,
   BOSS_NAMES,
   BOSS_META,
   fireIntervalScale,
   vespaFires,
   softenShot,
+  moveSpeed,
+  ENEMY_BULLET_R,
+  BOMB_SCORE,
+  BOMB_DAMAGE,
+  BOMB_COOLDOWN,
+  EMPTY_FILL_SEC,
 } from "./core.js";
 import { STAGES } from "./stages.js";
 import { FX } from "./particles.js";
@@ -79,6 +85,8 @@ export class Game {
     this.cleared = false;
     this.introT = 0;
     this.runT = 0;
+    this.emptyT = 0;
+    this.bombCd = 0;
     this.player = this._player();
     this.enemies = pool();
     this.pBullets = pool();
@@ -99,6 +107,7 @@ export class Game {
       shield: 0,
       invuln: 0,
       alive: true,
+      focus: false,
     };
   }
 
@@ -144,16 +153,21 @@ export class Game {
     this.bgScroll += dt * this._scrollSpeed();
     this.fx.update(dt);
     if (this.bannerT > 0) this.bannerT -= dt;
-    const wantBomb = input.consumeBomb();
-    if (this.mode !== "playing") return;
+    if (this.mode !== "playing") {
+      input.clearPlay?.();
+      return;
+    }
     this.runT += dt;
 
     if (this.introT > 0) this.introT -= dt;
 
     const p = this.player;
+    this.bombCd = Math.max(0, this.bombCd - dt);
     if (p.alive) {
-      p.x = clamp(p.x + input.moveX * PLAYER_SPEED * dt, 16, W - 16);
-      p.y = clamp(p.y + input.moveY * PLAYER_SPEED * dt, 40, H - 28);
+      p.focus = !!input.focusHeld;
+      const spd = moveSpeed(p.focus);
+      p.x = clamp(p.x + input.moveX * spd * dt, 16, W - 16);
+      p.y = clamp(p.y + input.moveY * spd * dt, 40, H - 28);
       p.invuln = Math.max(0, p.invuln - dt);
       p.rapidT = Math.max(0, p.rapidT - dt);
       p.spreadT = Math.max(0, p.spreadT - dt);
@@ -164,7 +178,7 @@ export class Game {
         p.fireCd = p.rapidT > 0 ? PLAYER_FIRE_RAPID : PLAYER_FIRE;
         this.audio.shoot();
       }
-      if (wantBomb) this._bomb();
+      if (input.consumeBomb() && this.bombCd <= 0) this._bomb();
       if (Math.random() < dt * 28) this.fx.trail(p.x + (Math.random() - 0.5) * 8, p.y + 16);
     }
 
@@ -207,32 +221,48 @@ export class Game {
     this.pBullets.push({ x, y, vx, vy, r: 3.2, dmg: 1 });
   }
 
-  _ebullet(x, y, vx, vy, r = 3.4) {
+  _ebullet(x, y, vx, vy, r = ENEMY_BULLET_R) {
     this.eBullets.push({ x, y, vx, vy, r });
   }
 
   _bomb() {
-    if (this.bombs <= 0 || !this.player.alive) return;
+    if (this.bombs <= 0 || !this.player.alive || this.bombCd > 0) return;
     this.bombs--;
+    this.bombCd = BOMB_COOLDOWN;
     this.audio.bigBoom();
-    this.fx.boom(this.player.x, this.player.y, 40, "#9ad4ff");
-    this.fx.shake = 10;
+    this.fx.boom(this.player.x, this.player.y, 28, "#9ad4ff");
+    this.fx.shake = 7;
     this.eBullets.length = 0;
     for (const e of this.enemies) {
       if (e.dead) continue;
-      e.hp -= 18;
+      e.hp -= BOMB_DAMAGE;
       e.flash = 0.18;
       if (e.hp <= 0) this._kill(e, true);
     }
   }
 
   _director(dt) {
+    // Tempo lógico (segundos de jogo), igual no PC e no celular — nunca usa
+    // largura/altura CSS do canvas. Letterbox não atrasa nem cancela ondas.
     if (this.cleared || this.pendingBoss) return;
     this.waveT += dt;
     const script = STAGES[this.stageIndex].waves;
     while (this.waveI < script.length && script[this.waveI].at <= this.waveT) {
       const ev = script[this.waveI++];
       this._spawnEvent(ev);
+      this.emptyT = 0;
+    }
+    const busy =
+      this.enemies.some((e) => !e.dead) || this.pickups.length > 0 || this.bannerT > 0.4;
+    if (busy) {
+      this.emptyT = 0;
+      return;
+    }
+    this.emptyT += dt;
+    if (this.emptyT >= EMPTY_FILL_SEC && this.waveI < script.length) {
+      this.emptyT = 0;
+      this._enemy("vespa", 48, -22, "down", 1, 1);
+      this._enemy("vespa", 312, -22, "down", 1, 2);
     }
   }
 
@@ -449,7 +479,7 @@ export class Game {
       for (let i = 0; i < 14; i++) {
         if (i === 3 || i === 10) continue;
         const a = (i / 14) * Math.PI * 2 + e.t;
-        this._ebullet(e.x, e.y, Math.cos(a) * spd, Math.sin(a) * spd, 3.8);
+        this._ebullet(e.x, e.y, Math.cos(a) * spd, Math.sin(a) * spd);
       }
     } else if (e.attack === "rain") {
       for (let i = 0; i < 8; i++) {
@@ -565,18 +595,27 @@ export class Game {
     e.dead = true;
     this.fx.boom(e.x, e.y, e.boss ? 42 : 16, e.boss ? "#e0b84a" : "#e8c070");
     this.audio.explosion();
-    this.combo += 1;
-    this.comboT = COMBO_WINDOW;
-    const pts = scoreKill(e.score, this.combo, this.loop);
-    this._addScore(pts);
-    this.fx.floatText(e.x, e.y - 10, `+${pts}`, this.combo > 3 ? "#ff9a4a" : "#ffe08a");
-    if (this.combo >= 4) this.fx.floatText(e.x, e.y - 24, `COMBO x${this.combo}`, "#fff");
-    if (e.drop) this.pickups.push({ x: e.x, y: e.y, kind: e.drop, t: 0 });
-    else if (!fromBomb && Math.random() < 0.08) {
+    if (fromBomb) {
+      this._addScore(BOMB_SCORE);
+      this.fx.floatText(e.x, e.y - 10, `+${BOMB_SCORE}`, "#9ad4ff");
+    } else {
+      this.combo += 1;
+      this.comboT = COMBO_WINDOW;
+      const pts = scoreKill(e.score, this.combo, this.loop);
+      this._addScore(pts);
+      this.fx.floatText(e.x, e.y - 10, `+${pts}`, this.combo > 3 ? "#ff9a4a" : "#ffe08a");
+      if (this.combo >= 4) this.fx.floatText(e.x, e.y - 24, `COMBO x${this.combo}`, "#fff");
+    }
+    if (e.kind === "as" || e.drop) {
+      const kind = e.kind === "as"
+        ? WEAPON_DROPS[(Math.random() * WEAPON_DROPS.length) | 0]
+        : e.drop;
+      this.pickups.push({ x: e.x, y: e.y, kind, t: 0 });
+    } else if (!fromBomb && Math.random() < 0.16) {
       this.pickups.push({
         x: e.x,
         y: e.y,
-        kind: PICKUPS[(Math.random() * PICKUPS.length) | 0],
+        kind: WEAPON_DROPS[(Math.random() * WEAPON_DROPS.length) | 0],
         t: 0,
       });
     }
@@ -619,9 +658,13 @@ export class Game {
   _applyPickup(kind, x, y) {
     const p = this.player;
     this.audio.pickup();
-    if (kind === "spread") {
+    if (kind === "shot") {
       p.spread = Math.min(MAX_SPREAD, p.spread + 2);
-      p.spreadT = 12;
+      p.spreadT = Math.max(p.spreadT, 14);
+      this.fx.floatText(x, y, "TIRO+", "#ffe08a");
+    } else if (kind === "spread") {
+      p.spread = Math.min(MAX_SPREAD, p.spread + 2);
+      p.spreadT = 14;
       this.fx.floatText(x, y, "LEQUE", "#ffd36a");
     } else if (kind === "rapid") {
       p.rapidT = 10;

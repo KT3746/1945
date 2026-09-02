@@ -1,5 +1,8 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
 import {
   clamp,
   circleHit,
@@ -9,10 +12,22 @@ import {
   fireIntervalScale,
   vespaFires,
   softenShot,
+  moveSpeed,
+  PLAYER_SPEED,
+  START_BOMBS,
+  BOMB_SCORE,
+  BOMB_DAMAGE,
+  ENEMY_BULLET_R,
+  EMPTY_FILL_SEC,
+  PICKUP_LABEL,
   BOSS_META,
   BOSS_NAMES,
   STAGE_META,
 } from "../js/core.js";
+import { VERSION } from "../js/version.js";
+import { STAGES } from "../js/stages.js";
+
+const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 
 test("clamp limita o valor", () => {
   assert.equal(clamp(5, 0, 3), 3);
@@ -69,4 +84,44 @@ test("chefes têm nome e subtítulo próprios", () => {
     assert.equal(BOSS_META[id].name, BOSS_NAMES[id]);
     assert.equal(stageSubs.has(BOSS_META[id].subtitle), false);
   }
+});
+
+test("jogador mais rápido, foco mais lento", () => {
+  assert.ok(PLAYER_SPEED >= 320);
+  assert.equal(moveSpeed(false), PLAYER_SPEED);
+  assert.ok(moveSpeed(true) < moveSpeed(false) * 0.5);
+});
+
+test("bomba começa em 2 e não farm de pontos", () => {
+  assert.equal(START_BOMBS, 2);
+  assert.equal(BOMB_SCORE, 20);
+  assert.ok(BOMB_DAMAGE <= 14);
+});
+
+test("tiro inimigo grande o bastante para contrastar", () => {
+  assert.ok(ENEMY_BULLET_R >= 6);
+});
+
+test("bônus de tiro tem nome legível", () => {
+  assert.equal(PICKUP_LABEL.shot, "TIRO");
+});
+
+test("estágio 1 sem buraco longo entre ondas", () => {
+  const ats = STAGES[0].waves.map((w) => w.at);
+  for (let i = 1; i < ats.length; i++) {
+    assert.ok(ats[i] - ats[i - 1] <= 4.2, `vão ${ats[i - 1]} → ${ats[i]}`);
+  }
+  assert.ok(EMPTY_FILL_SEC <= 3.2);
+});
+
+test("versão 1.0.3 é a única no HTML", () => {
+  assert.equal(VERSION, "1.0.3");
+  const html = readFileSync(join(root, "index.html"), "utf8");
+  const qs = html.match(/\?v=([0-9.]+)/g) || [];
+  assert.ok(qs.length >= 3);
+  for (const q of qs) assert.equal(q, "?v=1.0.3");
+  assert.equal(html.includes("1.0.2"), false);
+  assert.equal(html.includes("1.0.1"), false);
+  assert.match(html, /id="title-ver">v1\.0\.3</);
+  assert.match(html, /id="ver"[^>]*>v1\.0\.3</);
 });

@@ -60,7 +60,7 @@ export class Renderer {
       this._bullets(ctx, game);
       game.fx.draw(ctx);
       this._combo(ctx, game);
-      this._hud(ctx, game);
+      this._status(ctx, game);
       this._banner(ctx, game);
     }
     ctx.restore();
@@ -172,6 +172,21 @@ export class Renderer {
       ctx.arc(p.x, p.y, 18 + Math.sin(this.time * 6) * 1.5, 0, Math.PI * 2);
       ctx.stroke();
     }
+    const core = p.focus ? 4.2 : 2.8;
+    ctx.fillStyle = p.focus ? "#fff8e0" : "#ff3d6e";
+    ctx.strokeStyle = "#140810";
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, core, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    if (p.focus) {
+      ctx.strokeStyle = "rgba(255,244,180,0.85)";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 9, 0, Math.PI * 2);
+      ctx.stroke();
+    }
     ctx.globalAlpha = 1;
   }
 
@@ -217,13 +232,17 @@ export class Renderer {
       ctx.fillStyle = "#fff4b0";
     }
     for (const b of game.eBullets) {
-      ctx.fillStyle = "#ff6a4a";
+      ctx.fillStyle = "#1a0610";
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, b.r + 1.6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#ff2a78";
       ctx.beginPath();
       ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillStyle = "#ffd0c0";
+      ctx.fillStyle = "#ffb020";
       ctx.beginPath();
-      ctx.arc(b.x, b.y, b.r * 0.45, 0, Math.PI * 2);
+      ctx.arc(b.x, b.y, Math.max(2.2, b.r * 0.42), 0, Math.PI * 2);
       ctx.fill();
     }
   }
@@ -233,30 +252,42 @@ export class Renderer {
       const bob = Math.sin(u.t * 6) * 2;
       ctx.fillStyle = "#111c";
       ctx.beginPath();
-      ctx.arc(u.x, u.y + bob + 2, 10, 0, Math.PI * 2);
+      ctx.arc(u.x, u.y + bob + 2, 13, 0, Math.PI * 2);
       ctx.fill();
       const col =
-        u.kind === "spread"
-          ? "#e0b84a"
-          : u.kind === "rapid"
-            ? "#e85d4c"
-            : u.kind === "shield"
-              ? "#7ec8e3"
-              : u.kind === "bomb"
-                ? "#6aa0e8"
-                : "#ffe08a";
+        u.kind === "shot"
+          ? "#fff06a"
+          : u.kind === "spread"
+            ? "#e0b84a"
+            : u.kind === "rapid"
+              ? "#e85d4c"
+              : u.kind === "shield"
+                ? "#7ec8e3"
+                : u.kind === "bomb"
+                  ? "#6aa0e8"
+                  : "#ffe08a";
       ctx.fillStyle = col;
       ctx.beginPath();
-      ctx.moveTo(u.x, u.y + bob - 11);
-      ctx.lineTo(u.x + 11, u.y + bob);
-      ctx.lineTo(u.x, u.y + bob + 11);
-      ctx.lineTo(u.x - 11, u.y + bob);
+      ctx.moveTo(u.x, u.y + bob - 14);
+      ctx.lineTo(u.x + 14, u.y + bob);
+      ctx.lineTo(u.x, u.y + bob + 14);
+      ctx.lineTo(u.x - 14, u.y + bob);
       ctx.closePath();
       ctx.fill();
+      ctx.strokeStyle = "#140c08";
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
       ctx.fillStyle = "#1a1208";
-      ctx.font = "700 9px Oswald, sans-serif";
+      ctx.font = "800 10px Oswald, sans-serif";
       ctx.textAlign = "center";
-      ctx.fillText(PICKUP_LABEL[u.kind][0], u.x, u.y + bob + 3);
+      const lab = PICKUP_LABEL[u.kind] || "BONUS";
+      ctx.fillText(lab[0], u.x, u.y + bob + 3);
+      ctx.font = "800 9px Barlow, sans-serif";
+      ctx.fillStyle = "#fff8e0";
+      ctx.strokeStyle = "#140c08";
+      ctx.lineWidth = 3;
+      ctx.strokeText(lab, u.x, u.y + bob + 24);
+      ctx.fillText(lab, u.x, u.y + bob + 24);
     }
     ctx.textAlign = "left";
   }
@@ -296,50 +327,19 @@ export class Renderer {
     ctx.textAlign = "left";
   }
 
-  _hud(ctx, game) {
-    if (game.mode === "gameover") return;
+  _status(ctx, game) {
+    if (game.mode === "title" || game.mode === "howto") return;
+    const bits = [];
+    if (game.player.spreadT > 0) bits.push(game.player.spread >= 5 ? "TIRO++" : "TIRO+");
+    if (game.player.rapidT > 0) bits.push("RAJADA");
+    if (game.player.shield > 0) bits.push(`ESCUDO ${game.player.shield}`);
+    if (game.player.focus) bits.push("FOCO");
+    if (!bits.length) return;
     ctx.save();
     ctx.fillStyle = "#ffe08a";
-    ctx.font = "700 13px Oswald, sans-serif";
-    ctx.textAlign = "left";
-    ctx.fillText(String(game.score).padStart(6, "0"), 10, 18);
-    const lives = Math.max(0, game.lives | 0);
-    ctx.fillStyle = "#c9d4e0";
-    ctx.font = "700 11px Barlow, sans-serif";
-    ctx.fillText(`vidas ${lives}`, 10, H - 14);
-    ctx.fillStyle = "#e0b84a";
-    const iconN = Math.min(lives, 5);
-    for (let i = 0; i < iconN; i++) {
-      const x = 72 + i * 13;
-      const y = H - 19;
-      ctx.beginPath();
-      ctx.moveTo(x, y - 7);
-      ctx.lineTo(x + 5, y + 1);
-      ctx.lineTo(x + 1.4, y + 1);
-      ctx.lineTo(x + 1.4, y + 6);
-      ctx.lineTo(x - 1.4, y + 6);
-      ctx.lineTo(x - 1.4, y + 1);
-      ctx.lineTo(x - 5, y + 1);
-      ctx.closePath();
-      ctx.fill();
-    }
-    ctx.fillStyle = "#c9d4e0";
-    ctx.fillText("bombas", 140, H - 14);
-    ctx.fillStyle = "#6aa0e8";
-    for (let i = 0; i < game.bombs; i++) {
-      ctx.beginPath();
-      ctx.arc(188 + i * 12, H - 18, 4, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    if (game.player.rapidT > 0 || game.player.spreadT > 0 || game.player.shield > 0) {
-      ctx.fillStyle = "#ffe08a";
-      const bits = [];
-      if (game.player.spreadT > 0) bits.push("Leque");
-      if (game.player.rapidT > 0) bits.push("Rajada");
-      if (game.player.shield > 0) bits.push(`Escudo ${game.player.shield}`);
-      ctx.textAlign = "right";
-      ctx.fillText(bits.join(" · "), W - 10, H - 14);
-    }
+    ctx.font = "700 11px Oswald, sans-serif";
+    ctx.textAlign = "right";
+    ctx.fillText(bits.join(" · "), W - 10, H - 14);
     ctx.restore();
   }
 }

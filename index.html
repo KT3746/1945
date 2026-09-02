@@ -13,11 +13,11 @@
     <meta property="og:description" content="Shoot-em-up vertical original, em português, para celular e computador." />
     <meta property="og:type" content="website" />
     <title>Céu de Aço</title>
-    <link rel="icon" href="assets/favicon.svg?v=1.0.2" type="image/svg+xml" />
+    <link rel="icon" href="assets/favicon.svg?v=1.0.3" type="image/svg+xml" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Barlow:wght@500;600;700;800&family=Oswald:wght@500;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="css/styles.css?v=1.0.2" />
+    <link rel="stylesheet" href="css/styles.css?v=1.0.3" />
   </head>
   <body>
     <div id="app">
@@ -45,14 +45,14 @@
             </div>
             <div class="stat">
               <span>Bombas</span>
-              <strong id="stat-bombs">3</strong>
+              <strong id="stat-bombs">2</strong>
             </div>
           </div>
           <div class="toolbar">
             <button type="button" id="btn-mute" class="chip" aria-pressed="false" title="Silenciar">
               Som
             </button>
-            <button type="button" id="btn-pause" class="chip" aria-pressed="false" title="Pausar">
+            <button type="button" id="btn-pause" class="chip" aria-pressed="false" title="Pausar (P ou Esc)" aria-keyshortcuts="p Escape">
               Pausa
             </button>
           </div>
@@ -73,18 +73,19 @@
             <div id="stick-knob"></div>
           </div>
           <div class="touch-actions">
+            <button type="button" id="btn-focus" aria-label="Foco">Foco</button>
             <button type="button" id="btn-bomb" aria-label="Bomba">Bomba</button>
             <button type="button" id="btn-fire" aria-label="Atirar">Fogo</button>
           </div>
         </nav>
 
-        <p class="desk-hint">Setas ou WASD mover · Espaço/Z atirar · X/Shift bomba · P/Esc pausar</p>
+        <p class="desk-hint">Setas ou WASD mover · Espaço/Z atirar · Shift/C foco · X bomba · P/Esc pausar</p>
       </div>
     </div>
 
     <div id="screen-title" class="overlay" role="dialog" aria-modal="true" aria-labelledby="title-h">
       <div class="modal">
-        <p class="eyebrow">Esquadrilha Horizonte · <span id="title-ver">v1.0.2</span></p>
+        <p class="eyebrow">Esquadrilha Horizonte · <span id="title-ver">v1.0.3</span></p>
         <h2 id="title-h">Céu de Aço</h2>
         <p class="tagline">Domine o céu. Sobreviva às ondas.</p>
         <p class="story">
@@ -107,13 +108,14 @@
           <li>O céu <strong>sobe sozinho</strong>. Você voa na parte de baixo e atira para cima.</li>
           <li>Desvie de aviões e tiros. A caixa de dano é <strong>menor</strong> que o desenho do avião.</li>
           <li>Depois de um hit você fica <strong>invencível por um instante</strong> — use para reposicionar.</li>
-          <li>Inimigos dourados soltam bônus: <strong>Leque</strong>, <strong>Rajada</strong>, <strong>Escudo</strong>, <strong>Bomba</strong> e <strong>Medalha</strong>.</li>
+          <li>Inimigos dourados soltam bônus: <strong>TIRO+</strong>, <strong>Leque</strong>, <strong>Rajada</strong>, <strong>Escudo</strong>, <strong>Bomba</strong> e <strong>Medalha</strong>.</li>
           <li>Bomba limpa tiros inimigos e fere tudo na tela. Use com calma — são poucas.</li>
+          <li>Segure <strong>Shift</strong> ou <strong>C</strong> (ou Foco no celular) para voar mais devagar e ver o ponto frágil.</li>
           <li>Chefões avisam o ataque (brilho / linha). Cinco estágios, depois o céu recomeça mais duro.</li>
         </ul>
         <div class="keys">
-          <p><strong>Computador:</strong> setas ou WASD · Espaço/Z fogo · X/Shift bomba · P/Esc pausa</p>
-          <p><strong>Celular:</strong> stick à esquerda · Fogo e Bomba à direita</p>
+          <p><strong>Computador:</strong> setas ou WASD · Espaço/Z fogo · Shift/C foco · X bomba · P/Esc pausa</p>
+          <p><strong>Celular:</strong> stick à esquerda · Fogo, Bomba e Foco à direita</p>
         </div>
         <button type="button" id="btn-howto-go" class="cta">Entendi, decolar</button>
         <button type="button" id="btn-howto-back" class="linkish">Voltar</button>
@@ -157,7 +159,7 @@
       </div>
     </div>
 
-    <div id="ver" class="foot">v1.0.2</div>
-    <script type="module" src="js/main.js?v=1.0.2"></script>
+    <div id="ver" class="foot">v1.0.3</div>
+    <script type="module" src="js/main.js?v=1.0.3"></script>
   </body>
 </html>

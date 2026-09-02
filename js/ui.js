@@ -3,9 +3,10 @@ import { STAGE_META, BOSS_NAMES } from "./core.js";
 import { VERSION } from "./version.js";
 
 export class UI {
-  constructor(game, audio) {
+  constructor(game, audio, input) {
     this.game = game;
     this.audio = audio;
+    this.input = input;
     this.els = {
       title: document.getElementById("screen-title"),
       howto: document.getElementById("screen-howto"),
@@ -22,7 +23,6 @@ export class UI {
       overHigh: document.getElementById("over-high"),
       stageH: document.getElementById("stage-h"),
       stageText: document.getElementById("stage-text"),
-      stageScore: document.getElementById("stage-score"),
       stageEyebrow: document.getElementById("stage-eyebrow"),
       bossBar: document.getElementById("boss-bar"),
       bossName: document.getElementById("boss-name"),
@@ -31,12 +31,40 @@ export class UI {
       pauseBtn: document.getElementById("btn-pause"),
       ver: document.getElementById("ver"),
     };
-    if (this.els.ver) this.els.ver.textContent = `v${VERSION}`;
-    const titleVer = document.getElementById("title-ver");
-    if (titleVer) titleVer.textContent = `v${VERSION}`;
+    this._syncVersion();
     this._bind();
     this._syncMute();
     this.show("title");
+  }
+
+  _syncVersion() {
+    const label = `v${VERSION}`;
+    if (this.els.ver) this.els.ver.textContent = label;
+    const titleVer = document.getElementById("title-ver");
+    if (titleVer) titleVer.textContent = label;
+  }
+
+  _clearPlay() {
+    this.input?.clearPlay();
+  }
+
+  _lockPlay() {
+    if (this.input) this.input.playLocked = true;
+    this._clearPlay();
+  }
+
+  _unlockPlay() {
+    this._clearPlay();
+    if (this.input) this.input.playLocked = false;
+  }
+
+  _blurChrome() {
+    this.els.pauseBtn?.blur();
+    this.els.mute?.blur();
+    const active = document.activeElement;
+    if (active && active.blur && active.closest && active.closest(".toolbar, .chip")) {
+      active.blur();
+    }
   }
 
   _bind() {
@@ -47,6 +75,7 @@ export class UI {
       a.unlock();
       a.ui();
       fn();
+      if (ev.currentTarget && ev.currentTarget.blur) ev.currentTarget.blur();
     };
 
     document.getElementById("btn-play").addEventListener("click", go(() => this._play()));
@@ -65,18 +94,41 @@ export class UI {
       this._syncMute();
       void m;
     }));
-    this.els.pauseBtn.addEventListener("click", go(() => this.togglePause()));
+
+    // Pausa só no toque/clique explícito neste botão — Space/Enter no foco
+    // do botão NÃO pausam (isso gerava "pausa fantasma" sem P/Esc).
+    this.els.pauseBtn.addEventListener("pointerdown", (e) => {
+      if (e.pointerType === "mouse" && e.button !== 0) return;
+      e.preventDefault();
+      a.unlock();
+      a.ui();
+      this.togglePause();
+      this.els.pauseBtn.blur();
+    });
+    this.els.pauseBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+    });
+    this.els.pauseBtn.addEventListener("keydown", (e) => {
+      if (e.code === "Space" || e.code === "Enter") {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    });
   }
 
   _play() {
+    this._unlockPlay();
     const q = new URLSearchParams(location.search);
     const st = Number(q.get("stage") || 0);
     this.game.start(Number.isFinite(st) ? st : 0);
     this.show(null);
     this.refresh();
+    this._blurChrome();
   }
 
   toTitle() {
+    this._lockPlay();
     this.game.mode = "title";
     this.game.resetRun();
     this.show("title");
@@ -84,13 +136,16 @@ export class UI {
   }
 
   resume() {
+    this._unlockPlay();
     this.game.resume();
     this.show(null);
+    this._blurChrome();
   }
 
   togglePause() {
     if (this.game.mode === "playing") {
       this.game.pause();
+      this._lockPlay();
       this.show("pause");
     } else if (this.game.mode === "paused") {
       this.resume();
@@ -98,6 +153,7 @@ export class UI {
   }
 
   next() {
+    this._unlockPlay();
     this.game.nextStage();
     this.show(null);
   }
@@ -123,6 +179,7 @@ export class UI {
   onMode() {
     const m = this.game.mode;
     if (m === "stageclear") {
+      this._lockPlay();
       const looped = this.game.stageIndex === 4;
       const meta = STAGE_META[this.game.stageIndex];
       this.els.stageEyebrow.textContent = this.game.loop && this.game.stageIndex === 4
@@ -140,6 +197,7 @@ export class UI {
       next.textContent = this.game.stageIndex === 4 ? "Continuar o ciclo" : "Próximo estágio";
       this.show("stage");
     } else if (m === "gameover") {
+      this._lockPlay();
       this.els.overScore.textContent = String(this.game.score);
       this.els.overHigh.textContent = String(this.game.high);
       this.show("over");

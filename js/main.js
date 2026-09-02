@@ -10,11 +10,10 @@ const input = new Input();
 const game = new Game(audio);
 const canvas = document.getElementById("game");
 const renderer = new Renderer(canvas);
-const ui = new UI(game, audio);
+const ui = new UI(game, audio, input);
 
 let last = performance.now();
 let lastMode = game.mode;
-let hudT = 0;
 
 function frame(now) {
   const raw = (now - last) / 1000;
@@ -27,6 +26,13 @@ function frame(now) {
     ui.togglePause();
   }
 
+  if (game.mode !== "playing") {
+    input.playLocked = true;
+    input.clearPlay();
+  } else {
+    input.playLocked = false;
+  }
+
   game.update(dt, input);
   audio.update(dt);
   audio.setIntense(game.boss && game.mode === "playing" ? 1 : 0);
@@ -36,11 +42,7 @@ function frame(now) {
     ui.onMode();
     lastMode = game.mode;
   }
-  hudT += dt;
-  if (hudT > 0.08) {
-    hudT = 0;
-    ui.refresh();
-  }
+  ui.refresh();
 
   requestAnimationFrame(frame);
 }
