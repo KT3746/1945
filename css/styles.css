@@ -557,3 +557,5 @@ button, .chip, .touch, #stick, #game, #app {
 button {
   -webkit-user-drag: none;
 }
+
+#btn-focus { display: none !important; }

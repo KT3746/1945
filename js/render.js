@@ -82,36 +82,24 @@ export class Renderer {
   }
 
   _sea(ctx, pal, scroll) {
-    // Oceano legível e leve (evita travar no celular no fim da partida)
     ctx.fillStyle = pal.sea0;
     ctx.fillRect(0, 0, W, H);
-
-    ctx.globalAlpha = 0.28;
+    ctx.globalAlpha = 0.22;
     ctx.fillStyle = pal.sea1;
-    for (let i = 0; i < 8; i++) {
-      const y = ((i * 90 + scroll * 0.5) % (H + 90)) - 45;
-      ctx.fillRect(0, y, W, 40);
-    }
-    ctx.globalAlpha = 0.18;
-    ctx.fillStyle = pal.sea2;
-    for (let i = 0; i < 6; i++) {
-      const x = (i * 70 + scroll * 0.1) % (W + 60) - 30;
-      const y = ((i * 110 + scroll * 0.7) % (H + 80)) - 40;
-      ctx.beginPath();
-      ctx.ellipse(x, y, 50, 22, 0, 0, Math.PI * 2);
-      ctx.fill();
+    for (let i = 0; i < 5; i++) {
+      const y = ((i * 130 + scroll * 0.45) % (H + 130)) - 65;
+      ctx.fillRect(0, y, W, 50);
     }
     ctx.globalAlpha = 1;
-
     ctx.strokeStyle = pal.foam;
     ctx.lineWidth = 1;
-    for (let i = 0; i < 14; i++) {
-      const y = ((i * 48 + scroll * 1.0) % (H + 48)) - 24;
-      ctx.globalAlpha = 0.14;
+    for (let i = 0; i < 10; i++) {
+      const y = ((i * 64 + scroll * 0.95) % (H + 64)) - 32;
+      ctx.globalAlpha = 0.12;
       ctx.beginPath();
       ctx.moveTo(0, y);
-      for (let x = 0; x <= W; x += 16) {
-        ctx.lineTo(x, y + Math.sin(x * 0.07 + i + scroll * 0.015) * 2);
+      for (let x = 0; x <= W; x += 20) {
+        ctx.lineTo(x, y + Math.sin(x * 0.06 + i) * 1.8);
       }
       ctx.stroke();
     }
@@ -220,20 +208,7 @@ export class Renderer {
       const sc = 1.35;
       const dw = spr.width * sc;
       const dh = spr.height * sc;
-      // contorno escuro pra destacar do mar
-      ctx.save();
-      ctx.shadowColor = "rgba(0,0,0,0.85)";
-      ctx.shadowBlur = 0;
-      ctx.lineWidth = 3;
-      ctx.strokeStyle = "#140c08";
-      ctx.strokeRect(e.x - dw / 2 - 1, e.y - dh / 2 - 1, dw + 2, dh + 2);
       ctx.drawImage(spr, e.x - dw / 2, e.y - dh / 2, dw, dh);
-      // vinheta quente por cima (contraste com azul do mar)
-      ctx.globalAlpha = 0.22;
-      ctx.fillStyle = "#ff6a2a";
-      ctx.fillRect(e.x - dw / 2, e.y - dh / 2, dw, dh);
-      ctx.globalAlpha = 1;
-      ctx.restore();
       ctx.filter = "none";
       if (e.kind === "vespa" || e.kind === "gaviao" || e.kind === "as" || e.kind === "artilheiro") {
         drawProp(ctx, e.x, e.y + spr.height / 2 - 4, this.time * 1.2 + e.phase, "rgba(200,200,180,0.35)");

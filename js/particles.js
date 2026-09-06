@@ -22,8 +22,8 @@ export class FX {
   }
 
   boom(x, y, n = 18, color = "#e8c070") {
-    this._cap(80);
-    n = Math.min(n, 28);
+    this._cap(50);
+    n = Math.min(n, 18);
     for (let i = 0; i < n; i++) {
       const a = Math.random() * Math.PI * 2;
       const sp = 40 + Math.random() * 180;
@@ -44,7 +44,7 @@ export class FX {
   }
 
   trail(x, y, color = "#9ad4ff") {
-    this._cap(100);
+    this._cap(60);
     this.bits.push({
       x,
       y,
@@ -59,7 +59,7 @@ export class FX {
   }
 
   puff(x, y, color = "#c9d4e0") {
-    this._cap(100);
+    this._cap(60);
     this.bits.push({
       x,
       y,
