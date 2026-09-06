@@ -166,8 +166,24 @@ export class Game {
     if (p.alive) {
       p.focus = !!input.focusHeld;
       const spd = moveSpeed(p.focus);
-      p.x = clamp(p.x + input.moveX * spd * dt, 16, W - 16);
-      p.y = clamp(p.y + input.moveY * spd * dt, 40, H - 28);
+      if (input.aimActive) {
+        if (input.aimFresh) {
+          this._aimOffX = p.x - input.aimCX;
+          this._aimOffY = p.y - input.aimCY;
+          input.aimFresh = false;
+        }
+        const tx = clamp(input.aimCX + (this._aimOffX ?? 0), 16, W - 16);
+        const ty = clamp(input.aimCY + (this._aimOffY ?? 0), 40, H - 28);
+        // segue o dedo com leve suavização (estilo shmup mobile)
+        const k = Math.min(1, 18 * dt);
+        p.x += (tx - p.x) * k;
+        p.y += (ty - p.y) * k;
+        p.x = clamp(p.x, 16, W - 16);
+        p.y = clamp(p.y, 40, H - 28);
+      } else {
+        p.x = clamp(p.x + input.moveX * spd * dt, 16, W - 16);
+        p.y = clamp(p.y + input.moveY * spd * dt, 40, H - 28);
+      }
       p.invuln = Math.max(0, p.invuln - dt);
       p.rapidT = Math.max(0, p.rapidT - dt);
       p.spreadT = Math.max(0, p.spreadT - dt);

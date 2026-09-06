@@ -1,5 +1,7 @@
 /**
- * Teclado + stick virtual + botões de fogo/bomba.
+ * Teclado + arraste no playfield (finger-follow) + botões de fogo/bomba.
+ * No celular: toque/arraste em qualquer lugar do canvas move o avião
+ * seguindo o dedo (offset no primeiro toque, sem teleporte).
  */
 export class Input {
   constructor() {
@@ -11,8 +13,15 @@ export class Input {
     this.pausePressed = false;
     this.touchEnabled = false;
 
+    /** Aim no espaço do canvas (360×640). */
+    this.aimActive = false;
+    this.aimFresh = false;
+    this.aimCX = 0;
+    this.aimCY = 0;
+
     this._keys = new Set();
     this._stick = { active: false, x: 0, y: 0, id: null };
+    this._aim = { active: false, id: null };
     this._fireBtn = false;
     this._bombBtn = false;
     this._focusBtn = false;
@@ -26,6 +35,7 @@ export class Input {
       }
     });
     this._bindTouch();
+    this._bindAim();
   }
 
   _down(e) {
@@ -61,15 +71,88 @@ export class Input {
     this._keys.delete(e.code);
   }
 
+  _canvasFromClient(clientX, clientY) {
+    const canvas = document.getElementById("game");
+    if (!canvas) return null;
+    const r = canvas.getBoundingClientRect();
+    if (r.width <= 0 || r.height <= 0) return null;
+    const x = ((clientX - r.left) / r.width) * canvas.width;
+    const y = ((clientY - r.top) / r.height) * canvas.height;
+    return { x, y };
+  }
+
+  _setAimFromEvent(e, fresh) {
+    const p = this._canvasFromClient(e.clientX, e.clientY);
+    if (!p) return;
+    this.aimCX = p.x;
+    this.aimCY = p.y;
+    this.aimActive = true;
+    if (fresh) this.aimFresh = true;
+    this.touchEnabled = true;
+  }
+
+  _endAim(pointerId) {
+    if (pointerId != null && this._aim.id != null && pointerId !== this._aim.id) {
+      return;
+    }
+    this._aim.active = false;
+    this._aim.id = null;
+    this.aimActive = false;
+    this.aimFresh = false;
+  }
+
+  _bindAim() {
+    const canvas = document.getElementById("game");
+    const wrap = document.getElementById("board-wrap");
+    const target = canvas || wrap;
+    if (!target) return;
+
+    const isUiChrome = (el) =>
+      el &&
+      el.closest &&
+      el.closest("#btn-fire, #btn-bomb, #btn-focus, #stick, #btn-pause, #btn-mute");
+
+    const onDown = (e) => {
+      if (this.playLocked) return;
+      if (e.pointerType === "mouse" && e.button !== 0) return;
+      if (isUiChrome(e.target)) return;
+      e.preventDefault();
+      try {
+        target.setPointerCapture(e.pointerId);
+      } catch (_) {}
+      this._aim.active = true;
+      this._aim.id = e.pointerId;
+      this._setAimFromEvent(e, true);
+    };
+
+    const onMove = (e) => {
+      if (!this._aim.active || e.pointerId !== this._aim.id) return;
+      e.preventDefault();
+      this._setAimFromEvent(e, false);
+    };
+
+    const onUp = (e) => {
+      if (e.pointerId === this._aim.id) this._endAim(e.pointerId);
+    };
+
+    target.addEventListener("pointerdown", onDown);
+    target.addEventListener("pointermove", onMove);
+    target.addEventListener("pointerup", onUp);
+    target.addEventListener("pointercancel", onUp);
+    target.addEventListener("lostpointercapture", () => {
+      if (this._aim.active) this._endAim(this._aim.id);
+    });
+  }
+
   _bindTouch() {
     const stick = document.getElementById("stick");
     const knob = document.getElementById("stick-knob");
     const fire = document.getElementById("btn-fire");
     const bomb = document.getElementById("btn-bomb");
     const focus = document.getElementById("btn-focus");
-    if (!stick) return;
 
     const setFrom = (clientX, clientY) => {
+      if (!stick) return;
       const r = stick.getBoundingClientRect();
       const cx = r.left + r.width / 2;
       const cy = r.top + r.height / 2;
@@ -88,7 +171,7 @@ export class Input {
     };
 
     this._syncKnob = () => {
-      if (!knob) return;
+      if (!knob || !stick) return;
       const max = stick.getBoundingClientRect().width * 0.38;
       knob.style.transform = `translate(${this._stick.x * max}px, ${this._stick.y * max}px)`;
     };
@@ -101,30 +184,36 @@ export class Input {
       this._syncKnob();
     };
 
-    stick.addEventListener("pointerdown", (e) => {
-      e.preventDefault();
-      stick.setPointerCapture(e.pointerId);
-      this._stick.active = true;
-      this._stick.id = e.pointerId;
-      this.touchEnabled = true;
-      setFrom(e.clientX, e.clientY);
-    });
-    stick.addEventListener("pointermove", (e) => {
-      if (!this._stick.active || e.pointerId !== this._stick.id) return;
-      setFrom(e.clientX, e.clientY);
-    });
-    stick.addEventListener("pointerup", (e) => {
-      if (e.pointerId === this._stick.id) this._endStick();
-    });
-    stick.addEventListener("pointercancel", () => this._endStick());
-    stick.addEventListener("lostpointercapture", () => {
-      if (this._stick.active) this._endStick();
-    });
+    if (stick) {
+      stick.addEventListener("pointerdown", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        stick.setPointerCapture(e.pointerId);
+        this._stick.active = true;
+        this._stick.id = e.pointerId;
+        this.touchEnabled = true;
+        setFrom(e.clientX, e.clientY);
+      });
+      stick.addEventListener("pointermove", (e) => {
+        if (!this._stick.active || e.pointerId !== this._stick.id) return;
+        setFrom(e.clientX, e.clientY);
+      });
+      stick.addEventListener("pointerup", (e) => {
+        if (e.pointerId === this._stick.id) this._endStick();
+      });
+      stick.addEventListener("pointercancel", () => this._endStick());
+      stick.addEventListener("lostpointercapture", () => {
+        if (this._stick.active) this._endStick();
+      });
+    }
+
     window.addEventListener("pointerup", (e) => {
       if (this._stick.active && e.pointerId === this._stick.id) this._endStick();
+      if (this._aim.active && e.pointerId === this._aim.id) this._endAim(e.pointerId);
     });
     window.addEventListener("pointercancel", () => {
       if (this._stick.active) this._endStick();
+      if (this._aim.active) this._endAim(this._aim.id);
       this._fireBtn = false;
       this._bombBtn = false;
       this._focusBtn = false;
@@ -134,6 +223,7 @@ export class Input {
       if (!el) return;
       const on = (e) => {
         e.preventDefault();
+        e.stopPropagation();
         this.touchEnabled = true;
         setter(true);
       };
@@ -153,6 +243,7 @@ export class Input {
     if (bomb) {
       bomb.addEventListener("pointerdown", (e) => {
         e.preventDefault();
+        e.stopPropagation();
         this.touchEnabled = true;
         this.bombPressed = true;
         this._bombBtn = true;
@@ -170,6 +261,10 @@ export class Input {
     this._bombBtn = false;
     this.moveX = 0;
     this.moveY = 0;
+    this.aimActive = false;
+    this.aimFresh = false;
+    this._aim.active = false;
+    this._aim.id = null;
     for (const code of [
       "Space",
       "KeyZ",
@@ -205,6 +300,7 @@ export class Input {
       this.moveY = 0;
       this.fireHeld = false;
       this.bombPressed = false;
+      this.aimActive = false;
       return;
     }
     let x = 0;
