@@ -167,16 +167,12 @@ export class Game {
       p.focus = !!input.focusHeld;
       const spd = moveSpeed(p.focus);
       if (input.aimActive) {
-        if (input.aimFresh) {
-          this._aimOffX = p.x - input.aimCX;
-          this._aimOffY = p.y - input.aimCY;
-          input.aimFresh = false;
-        }
-        const tx = clamp(input.aimCX + (this._aimOffX ?? 0), 16, W - 16);
-        const ty = clamp(input.aimCY + (this._aimOffY ?? 0), 40, H - 28);
-        // finger-follow 1:1 (sem lag)
-        p.x = tx;
-        p.y = ty;
+        // arraste relativo amplificado — responde na hora
+        p.x = clamp(p.x + (input.aimDX || 0), 16, W - 16);
+        p.y = clamp(p.y + (input.aimDY || 0), 40, H - 28);
+        input.aimDX = 0;
+        input.aimDY = 0;
+        input.aimFresh = false;
       } else {
         p.x = clamp(p.x + input.moveX * spd * dt, 16, W - 16);
         p.y = clamp(p.y + input.moveY * spd * dt, 40, H - 28);

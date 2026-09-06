@@ -13,11 +13,14 @@ export class Input {
     this.pausePressed = false;
     this.touchEnabled = false;
 
-    /** Aim no espaço do canvas (360×640). */
+    /** Arraste relativo de alta sensibilidade (canvas 360×640). */
     this.aimActive = false;
     this.aimFresh = false;
-    this.aimCX = 0;
-    this.aimCY = 0;
+    this.aimDX = 0;
+    this.aimDY = 0;
+    this._aimLast = null;
+    /** >1 = dedo anda pouco, avião anda muito */
+    this.aimSensitivity = 2.6;
 
     this._keys = new Set();
     this._stick = { active: false, x: 0, y: 0, id: null };
@@ -84,11 +87,19 @@ export class Input {
   _setAimFromEvent(e, fresh) {
     const p = this._canvasFromClient(e.clientX, e.clientY);
     if (!p) return;
-    this.aimCX = p.x;
-    this.aimCY = p.y;
     this.aimActive = true;
-    if (fresh) this.aimFresh = true;
     this.touchEnabled = true;
+    if (fresh || !this._aimLast) {
+      this._aimLast = { x: p.x, y: p.y };
+      this.aimDX = 0;
+      this.aimDY = 0;
+      this.aimFresh = !!fresh;
+      return;
+    }
+    const s = this.aimSensitivity || 2.6;
+    this.aimDX += (p.x - this._aimLast.x) * s;
+    this.aimDY += (p.y - this._aimLast.y) * s;
+    this._aimLast = { x: p.x, y: p.y };
   }
 
   _endAim(pointerId) {
@@ -99,6 +110,9 @@ export class Input {
     this._aim.id = null;
     this.aimActive = false;
     this.aimFresh = false;
+    this.aimDX = 0;
+    this.aimDY = 0;
+    this._aimLast = null;
   }
 
   _bindAim() {
@@ -263,6 +277,9 @@ export class Input {
     this.moveY = 0;
     this.aimActive = false;
     this.aimFresh = false;
+    this.aimDX = 0;
+    this.aimDY = 0;
+    this._aimLast = null;
     this._aim.active = false;
     this._aim.id = null;
     for (const code of [

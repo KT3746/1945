@@ -82,45 +82,67 @@ export class Renderer {
   }
 
   _sea(ctx, pal, scroll) {
-    // Mar top-down (sem horizonte/céu no topo — evita fundo “estranho”)
-    const base = ctx.createLinearGradient(0, 0, W, H);
-    base.addColorStop(0, pal.sea1);
-    base.addColorStop(0.45, pal.sea2);
-    base.addColorStop(1, pal.sea0);
-    ctx.fillStyle = base;
+    // Oceano top-down mais realista: profundidade, caústicas, ondulação
+    ctx.fillStyle = pal.sea0;
     ctx.fillRect(0, 0, W, H);
 
-    // Faixas de profundidade scrollando (vista de cima)
-    ctx.globalAlpha = 0.14;
-    for (let i = 0; i < 14; i++) {
-      const y = ((i * 52 + scroll * 0.65) % (H + 52)) - 26;
-      ctx.fillStyle = i % 2 ? pal.sea0 : pal.sea2;
-      ctx.fillRect(0, y, W, 26);
+    // manchas de profundidade (água mais clara/escura)
+    for (let i = 0; i < 28; i++) {
+      const x = (i * 79 + scroll * 0.08) % (W + 80) - 40;
+      const y = ((i * 97 + scroll * 0.55) % (H + 100)) - 50;
+      const rad = 28 + (i % 5) * 10;
+      const g = ctx.createRadialGradient(x, y, 4, x, y, rad);
+      g.addColorStop(0, pal.sea2 + "99");
+      g.addColorStop(0.55, pal.sea1 + "55");
+      g.addColorStop(1, "rgba(0,0,0,0)");
+      // fallback if hex+alpha fails in some browsers — use rgba via globalAlpha
+      ctx.globalAlpha = 0.22;
+      ctx.fillStyle = i % 2 ? pal.sea2 : pal.sea1;
+      ctx.beginPath();
+      ctx.ellipse(x, y, rad * 1.3, rad * 0.7, 0, 0, Math.PI * 2);
+      ctx.fill();
     }
     ctx.globalAlpha = 1;
 
-    // Ondas curtas horizontais
-    ctx.strokeStyle = pal.foam;
-    ctx.lineWidth = 1.25;
-    for (let i = 0; i < 22; i++) {
-      const y = ((i * 36 + scroll * 0.95) % (H + 24)) - 12;
-      ctx.globalAlpha = 0.12 + (i % 3) * 0.04;
+    // caústicas (luz na água)
+    ctx.save();
+    ctx.globalCompositeOperation = "lighter";
+    for (let i = 0; i < 16; i++) {
+      const x = (i * 61 + Math.sin(scroll * 0.01 + i) * 20) % W;
+      const y = ((i * 83 + scroll * 0.9) % (H + 40)) - 20;
+      ctx.globalAlpha = 0.07;
+      ctx.fillStyle = pal.foam;
       ctx.beginPath();
-      ctx.moveTo(0, y);
-      for (let x = 0; x <= W; x += 12) {
-        ctx.lineTo(x, y + Math.sin(x * 0.08 + i * 0.7 + scroll * 0.01) * 2.2);
+      ctx.ellipse(x, y, 18 + (i % 3) * 6, 7 + (i % 2) * 3, i * 0.4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+    ctx.globalAlpha = 1;
+
+    // cristas de onda
+    ctx.lineWidth = 1;
+    for (let i = 0; i < 26; i++) {
+      const y = ((i * 30 + scroll * 1.05) % (H + 30)) - 15;
+      ctx.strokeStyle = pal.foam;
+      ctx.globalAlpha = 0.1 + (i % 4) * 0.03;
+      ctx.beginPath();
+      ctx.moveTo(-4, y);
+      for (let x = 0; x <= W + 4; x += 10) {
+        const bob = Math.sin(x * 0.09 + i * 1.1 + scroll * 0.02) * 2.4
+          + Math.sin(x * 0.03 + i) * 1.2;
+        ctx.lineTo(x, y + bob);
       }
       ctx.stroke();
     }
     ctx.globalAlpha = 1;
 
-    // Espuma / glitter
-    ctx.fillStyle = pal.foam;
-    for (let i = 0; i < 55; i++) {
-      const x = (i * 47 + (scroll * 0.2) % 47) % W;
-      const y = ((i * 73 + scroll * 1.25) % (H + 8)) - 4;
-      ctx.globalAlpha = 0.16 + (i % 4) * 0.05;
-      ctx.fillRect(x, y, 2, 2);
+    // espuma pontilhada
+    for (let i = 0; i < 70; i++) {
+      const x = (i * 53 + scroll * 0.15) % W;
+      const y = ((i * 89 + scroll * 1.3) % (H + 6)) - 3;
+      ctx.globalAlpha = 0.12 + (i % 5) * 0.04;
+      ctx.fillStyle = pal.foam;
+      ctx.fillRect(x, y, 2, 1);
     }
     ctx.globalAlpha = 1;
   }
@@ -134,7 +156,7 @@ export class Renderer {
   }
 
   _clouds(ctx, scroll, pal) {
-    ctx.globalAlpha = pal === PAL.storm ? 0.35 : 0.45;
+    ctx.globalAlpha = pal === PAL.storm ? 0.22 : 0.28;
     for (const it of this.clouds) {
       const y = (it.y + scroll) % (H + 180) - 90;
       const spr = this.sprites.cloud[it.i];

@@ -302,30 +302,39 @@ export function bakeSprites() {
 }
 
 function island(g, w, h, top, bottom) {
-  g.fillStyle = bottom;
+  // areia
+  g.fillStyle = "#d2c08a";
   g.beginPath();
-  g.ellipse(w / 2, h * 0.62, w * 0.46, h * 0.32, 0, 0, Math.PI * 2);
+  g.ellipse(w * 0.5, h * 0.62, w * 0.46, h * 0.32, 0, 0, Math.PI * 2);
   g.fill();
+  // terra
   g.fillStyle = top;
   g.beginPath();
-  g.ellipse(w / 2, h * 0.5, w * 0.38, h * 0.28, 0, 0, Math.PI * 2);
+  g.ellipse(w * 0.5, h * 0.55, w * 0.38, h * 0.26, 0, 0, Math.PI * 2);
   g.fill();
-  g.fillStyle = "#1a3a20";
-  g.fillRect(w * 0.3, h * 0.18, 4, 12);
-  g.fillRect(w * 0.55, h * 0.12, 5, 16);
-  g.fillStyle = "#245c30";
+  g.fillStyle = bottom;
   g.beginPath();
-  g.arc(w * 0.3 + 2, h * 0.18, 7, 0, Math.PI * 2);
-  g.arc(w * 0.55 + 2, h * 0.12, 9, 0, Math.PI * 2);
+  g.ellipse(w * 0.5, h * 0.58, w * 0.3, h * 0.18, 0, 0, Math.PI * 2);
   g.fill();
+  // vegetação simples
+  g.fillStyle = "#1f5a28";
+  for (let i = 0; i < 4; i++) {
+    const tx = w * (0.28 + i * 0.14);
+    const ty = h * 0.42;
+    g.beginPath();
+    g.moveTo(tx, ty + 8);
+    g.lineTo(tx - 4, ty);
+    g.lineTo(tx + 4, ty);
+    g.fill();
+  }
 }
 
 function cloud(g, w, h, fill) {
   g.fillStyle = fill;
   g.beginPath();
-  g.ellipse(w * 0.3, h * 0.6, w * 0.22, h * 0.32, 0, 0, Math.PI * 2);
-  g.ellipse(w * 0.52, h * 0.45, w * 0.28, h * 0.4, 0, 0, Math.PI * 2);
-  g.ellipse(w * 0.72, h * 0.6, w * 0.2, h * 0.3, 0, 0, Math.PI * 2);
+  g.ellipse(w * 0.35, h * 0.55, w * 0.28, h * 0.35, 0, 0, Math.PI * 2);
+  g.ellipse(w * 0.55, h * 0.5, w * 0.32, h * 0.38, 0, 0, Math.PI * 2);
+  g.ellipse(w * 0.72, h * 0.58, w * 0.22, h * 0.28, 0, 0, Math.PI * 2);
   g.fill();
 }
 
