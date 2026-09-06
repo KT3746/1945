@@ -249,6 +249,10 @@ body {
 }
 
 .touch-actions button {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
   appearance: none;
   border: 0;
   font: 800 14px/1 Barlow, sans-serif;
@@ -540,4 +544,16 @@ button.linkish {
     width: 76px;
     height: 76px;
   }
+}
+
+
+/* evita seleção de texto no iOS ao segurar botões */
+button, .chip, .touch, #stick, #game, #app {
+  -webkit-user-select: none !important;
+  user-select: none !important;
+  -webkit-touch-callout: none !important;
+  -webkit-tap-highlight-color: transparent;
+}
+button {
+  -webkit-user-drag: none;
 }

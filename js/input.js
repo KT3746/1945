@@ -20,7 +20,7 @@ export class Input {
     this.aimDY = 0;
     this._aimLast = null;
     /** >1 = dedo anda pouco, avião anda muito */
-    this.aimSensitivity = 2.6;
+    this.aimSensitivity = 2.1;
 
     this._keys = new Set();
     this._stick = { active: false, x: 0, y: 0, id: null };
@@ -96,7 +96,7 @@ export class Input {
       this.aimFresh = !!fresh;
       return;
     }
-    const s = this.aimSensitivity || 2.6;
+    const s = this.aimSensitivity || 2.1;
     this.aimDX += (p.x - this._aimLast.x) * s;
     this.aimDY += (p.y - this._aimLast.y) * s;
     this._aimLast = { x: p.x, y: p.y };
