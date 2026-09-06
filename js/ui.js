@@ -179,6 +179,7 @@ export class UI {
   onMode() {
     const m = this.game.mode;
     if (m === "stageclear") {
+      this.input?.clearPlay?.();
       this._lockPlay();
       const looped = this.game.stageIndex === 4;
       const meta = STAGE_META[this.game.stageIndex];

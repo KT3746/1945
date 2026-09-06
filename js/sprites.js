@@ -286,6 +286,33 @@ export function bakeSprites() {
     g.fillRect(64, 8, 4, 12);
   });
 
+  s.bomb = canvas(28, 28, (g) => {
+    // corpo
+    g.fillStyle = "#2a3548";
+    g.beginPath();
+    g.arc(14, 16, 9, 0, Math.PI * 2);
+    g.fill();
+    g.fillStyle = "#4a90d8";
+    g.beginPath();
+    g.arc(14, 16, 7, 0, Math.PI * 2);
+    g.fill();
+    g.fillStyle = "#9ad4ff";
+    g.beginPath();
+    g.arc(11, 13, 2.2, 0, Math.PI * 2);
+    g.fill();
+    // pavio
+    g.strokeStyle = "#e0b84a";
+    g.lineWidth = 2;
+    g.beginPath();
+    g.moveTo(14, 7);
+    g.quadraticCurveTo(18, 4, 16, 2);
+    g.stroke();
+    g.fillStyle = "#e85d4c";
+    g.beginPath();
+    g.arc(16, 2, 2.2, 0, Math.PI * 2);
+    g.fill();
+  });
+
   s.island = [
     canvas(80, 48, (g) => island(g, 80, 48, "#2a6a3a", "#1a4a28")),
     canvas(64, 40, (g) => island(g, 64, 40, "#3a7a44", "#245830")),

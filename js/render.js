@@ -245,6 +245,11 @@ export class Renderer {
   _pickups(ctx, game) {
     for (const u of game.pickups) {
       const bob = Math.sin(u.t * 6) * 2;
+      if (u.kind === "bomb" && this.sprites.bomb) {
+        const spr = this.sprites.bomb;
+        ctx.drawImage(spr, u.x - spr.width / 2, u.y + bob - spr.height / 2);
+        continue;
+      }
       ctx.fillStyle = "#111c";
       ctx.beginPath();
       ctx.arc(u.x, u.y + bob + 2, 13, 0, Math.PI * 2);

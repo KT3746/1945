@@ -602,7 +602,7 @@ export class Game {
 
   _kill(e, fromBomb) {
     e.dead = true;
-    this.fx.boom(e.x, e.y, e.boss ? 42 : 16, e.boss ? "#e0b84a" : "#e8c070");
+    this.fx.boom(e.x, e.y, e.boss ? 14 : 12, e.boss ? "#e0b84a" : "#e8c070");
     this.audio.explosion();
     if (fromBomb) {
       this._addScore(BOMB_SCORE);
@@ -632,6 +632,14 @@ export class Game {
       this.boss = null;
       this.pendingBoss = false;
       this.cleared = true;
+      // limpa o campo na hora (evita pico de CPU/tiros no celular)
+      this.eBullets.length = 0;
+      this.enemies.forEach((x) => {
+        if (!x.boss) x.dead = true;
+      });
+      this.fx.reset();
+      this.fx.boom(e.x, e.y, 16, "#e0b84a");
+      this.audio.bigBoom();
     }
   }
 
@@ -683,7 +691,7 @@ export class Game {
       this.fx.floatText(x, y, "ESCUDO", "#9ad4ff");
     } else if (kind === "bomb") {
       this.bombs = Math.min(MAX_BOMBS, this.bombs + 1);
-      this.fx.floatText(x, y, "BOMBA", "#9ad4ff");
+      this.fx.floatText(x, y, "+", "#9ad4ff");
     } else {
       this._addScore(1000);
       this.fx.floatText(x, y, "+1000", "#ffe08a");

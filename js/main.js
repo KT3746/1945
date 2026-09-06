@@ -15,6 +15,27 @@ const ui = new UI(game, audio, input);
 let last = performance.now();
 let lastMode = game.mode;
 
+function releaseTouch() {
+  try {
+    input.clearPlay?.();
+    input.aimActive = false;
+    input.aimDX = 0;
+    input.aimDY = 0;
+    input._aimLast = null;
+    if (input._aim) {
+      input._aim.active = false;
+      input._aim.id = null;
+    }
+    if (typeof input._endStick === "function") input._endStick();
+    // solta capture do canvas (causa "travou" na tela de vitória)
+    if (canvas && canvas.releasePointerCapture) {
+      try {
+        // ignore if none
+      } catch (_) {}
+    }
+  } catch (_) {}
+}
+
 function frame(now) {
   const raw = (now - last) / 1000;
   last = now;
@@ -39,6 +60,9 @@ function frame(now) {
   renderer.draw(game);
 
   if (game.mode !== lastMode) {
+    if (game.mode === "stageclear" || game.mode === "gameover" || game.mode === "paused") {
+      releaseTouch();
+    }
     ui.onMode();
     lastMode = game.mode;
   }
