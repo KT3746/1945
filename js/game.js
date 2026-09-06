@@ -638,9 +638,13 @@ export class Game {
       for (const x of this.enemies) {
         if (x !== e) x.dead = true;
       }
+      this.enemies.length = 0;
       this.fx.reset();
       // som leve — bigBoom no celular engasga o main thread
-      this.audio.ui();
+      try { this.audio.ui(); } catch (_) {}
+      // abre vitória na hora (não depende de outro frame / _checkStage)
+      this.mode = "stageclear";
+      this._saveHigh();
     }
   }
 

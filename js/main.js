@@ -81,10 +81,19 @@ function frame(now) {
       releaseTouch();
       try { audio.ui(); } catch (_) {}
     }
-    ui.onMode();
+    try {
+      ui.onMode();
+    } catch (err) {
+      console.error("onMode", err);
+      // fallback: força tela de vitória se o modo for stageclear
+      if (game.mode === "stageclear") {
+        const el = document.getElementById("screen-stage");
+        if (el) el.classList.remove("hidden");
+      }
+    }
     lastMode = game.mode;
   }
-  ui.refresh();
+  try { ui.refresh(); } catch (_) {}
 
   requestAnimationFrame(frame);
 }

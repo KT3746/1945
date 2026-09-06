@@ -24,6 +24,7 @@ export class UI {
       stageH: document.getElementById("stage-h"),
       stageText: document.getElementById("stage-text"),
       stageEyebrow: document.getElementById("stage-eyebrow"),
+      stageScore: document.getElementById("stage-score"),
       bossBar: document.getElementById("boss-bar"),
       bossName: document.getElementById("boss-name"),
       bossFill: document.getElementById("boss-fill"),
@@ -184,23 +185,36 @@ export class UI {
     if (m === "stageclear") {
       this.input?.clearPlay?.();
       this._lockPlay();
-      document.body.classList.add("modal-open");
       const looped = this.game.stageIndex === 4;
       const meta = STAGE_META[this.game.stageIndex];
-      this.els.stageEyebrow.textContent = this.game.loop && this.game.stageIndex === 4
-        ? "Ciclo completo"
-        : "Estágio concluído";
-      this.els.stageH.textContent = looped && this.game.loop === 0
-        ? "Horizonte aberto"
-        : `Vitória: ${meta.name}`;
-      this.els.stageText.textContent =
-        this.game.stageIndex === 4
-          ? "A Frota recua — mas o céu recomeça mais duro. Prepare-se para o próximo ciclo."
-          : meta.subtitle;
-      this.els.stageScore.textContent = `Pontos: ${this.game.score}`;
+      if (this.els.stageEyebrow) {
+        this.els.stageEyebrow.textContent = this.game.loop && this.game.stageIndex === 4
+          ? "Ciclo completo"
+          : "Estágio concluído";
+      }
+      if (this.els.stageH) {
+        this.els.stageH.textContent = looped && this.game.loop === 0
+          ? "Horizonte aberto"
+          : `Vitória: ${meta.name}`;
+      }
+      if (this.els.stageText) {
+        this.els.stageText.textContent =
+          this.game.stageIndex === 4
+            ? "A Frota recua — mas o céu recomeça mais duro. Prepare-se para o próximo ciclo."
+            : meta.subtitle;
+      }
+      if (this.els.stageScore) {
+        this.els.stageScore.textContent = `Pontos: ${this.game.score}`;
+      }
       const next = document.getElementById("btn-next");
-      next.textContent = this.game.stageIndex === 4 ? "Continuar o ciclo" : "Próximo estágio";
+      if (next) {
+        next.textContent = this.game.stageIndex === 4 ? "Continuar o ciclo" : "Próximo estágio";
+        next.style.display = "";
+        next.hidden = false;
+      }
       this.show("stage");
+      // garante overlay visível mesmo se classe hidden falhar
+      if (this.els.stage) this.els.stage.classList.remove("hidden");
     } else if (m === "gameover") {
       this._lockPlay();
       this.els.overScore.textContent = String(this.game.score);
