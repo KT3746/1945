@@ -49,7 +49,7 @@ export class Renderer {
     ctx.translate(shakeX, shakeY);
     this._sea(ctx, pal, game.bgScroll);
     this._islands(ctx, game.bgScroll * 0.55);
-    this._clouds(ctx, game.bgScroll * 1.15, pal);
+    this._clouds(ctx, game.bgScroll * 0.35, pal);
     if (game.palette() === "storm") this._lightning(ctx);
     if (game.palette() === "fortress") this._searchlights(ctx, game.bgScroll);
 
@@ -82,33 +82,44 @@ export class Renderer {
   }
 
   _sea(ctx, pal, scroll) {
-    const g = ctx.createLinearGradient(0, 0, 0, H);
-    g.addColorStop(0, pal.sky);
-    g.addColorStop(0.28, pal.sea2);
-    g.addColorStop(0.7, pal.sea1);
-    g.addColorStop(1, pal.sea0);
-    ctx.fillStyle = g;
+    // Mar top-down (sem horizonte/céu no topo — evita fundo “estranho”)
+    const base = ctx.createLinearGradient(0, 0, W, H);
+    base.addColorStop(0, pal.sea1);
+    base.addColorStop(0.45, pal.sea2);
+    base.addColorStop(1, pal.sea0);
+    ctx.fillStyle = base;
     ctx.fillRect(0, 0, W, H);
 
+    // Faixas de profundidade scrollando (vista de cima)
+    ctx.globalAlpha = 0.14;
+    for (let i = 0; i < 14; i++) {
+      const y = ((i * 52 + scroll * 0.65) % (H + 52)) - 26;
+      ctx.fillStyle = i % 2 ? pal.sea0 : pal.sea2;
+      ctx.fillRect(0, y, W, 26);
+    }
+    ctx.globalAlpha = 1;
+
+    // Ondas curtas horizontais
     ctx.strokeStyle = pal.foam;
-    ctx.globalAlpha = 0.18;
-    ctx.lineWidth = 1;
-    for (let i = 0; i < 18; i++) {
-      const y = ((i * 42 + scroll * 0.8) % (H + 20)) - 10;
+    ctx.lineWidth = 1.25;
+    for (let i = 0; i < 22; i++) {
+      const y = ((i * 36 + scroll * 0.95) % (H + 24)) - 12;
+      ctx.globalAlpha = 0.12 + (i % 3) * 0.04;
       ctx.beginPath();
       ctx.moveTo(0, y);
-      for (let x = 0; x <= W; x += 16) {
-        ctx.lineTo(x, y + Math.sin(x * 0.04 + i) * 3);
+      for (let x = 0; x <= W; x += 12) {
+        ctx.lineTo(x, y + Math.sin(x * 0.08 + i * 0.7 + scroll * 0.01) * 2.2);
       }
       ctx.stroke();
     }
     ctx.globalAlpha = 1;
 
+    // Espuma / glitter
     ctx.fillStyle = pal.foam;
-    ctx.globalAlpha = 0.25;
-    for (let i = 0; i < 40; i++) {
-      const x = (i * 53) % W;
-      const y = ((i * 91 + scroll * 1.4) % (H + 10)) - 5;
+    for (let i = 0; i < 55; i++) {
+      const x = (i * 47 + (scroll * 0.2) % 47) % W;
+      const y = ((i * 73 + scroll * 1.25) % (H + 8)) - 4;
+      ctx.globalAlpha = 0.16 + (i % 4) * 0.05;
       ctx.fillRect(x, y, 2, 2);
     }
     ctx.globalAlpha = 1;
@@ -123,7 +134,7 @@ export class Renderer {
   }
 
   _clouds(ctx, scroll, pal) {
-    ctx.globalAlpha = pal === PAL.storm ? 0.55 : 0.8;
+    ctx.globalAlpha = pal === PAL.storm ? 0.35 : 0.45;
     for (const it of this.clouds) {
       const y = (it.y + scroll) % (H + 180) - 90;
       const spr = this.sprites.cloud[it.i];
@@ -213,7 +224,7 @@ export class Renderer {
         }
         ctx.restore();
       }
-      const sc = 1.18;
+      const sc = 1.35;
       const dw = spr.width * sc;
       const dh = spr.height * sc;
       ctx.drawImage(spr, e.x - dw / 2, e.y - dh / 2, dw, dh);
