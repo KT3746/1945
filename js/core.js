@@ -3,7 +3,7 @@
 export const W = 360;
 export const H = 640;
 
-export const PLAYER_SPEED = 332;
+export const PLAYER_SPEED = 380;
 export const FOCUS_SPEED_MUL = 0.42;
 export const PLAYER_HIT_R = 7;
 export const PLAYER_FIRE = 0.15;

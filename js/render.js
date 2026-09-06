@@ -213,7 +213,10 @@ export class Renderer {
         }
         ctx.restore();
       }
-      ctx.drawImage(spr, e.x - spr.width / 2, e.y - spr.height / 2);
+      const sc = 1.18;
+      const dw = spr.width * sc;
+      const dh = spr.height * sc;
+      ctx.drawImage(spr, e.x - dw / 2, e.y - dh / 2, dw, dh);
       ctx.filter = "none";
       if (e.kind === "vespa" || e.kind === "gaviao" || e.kind === "as" || e.kind === "artilheiro") {
         drawProp(ctx, e.x, e.y + spr.height / 2 - 4, this.time * 1.2 + e.phase, "rgba(200,200,180,0.35)");

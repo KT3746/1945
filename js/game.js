@@ -38,20 +38,20 @@ import { FX } from "./particles.js";
 import { STORAGE_HIGH } from "./version.js";
 
 const KIND = {
-  vespa: { hp: 2, r: 10, speed: 72, score: 120, fire: 2.6, shot: "down" },
-  gaviao: { hp: 3, r: 11, speed: 124, score: 220, fire: 1.85, shot: "aim" },
-  bufalo: { hp: 10, r: 16, speed: 48, score: 400, fire: 1.55, shot: "spread" },
-  artilheiro: { hp: 4, r: 11, speed: 58, score: 260, fire: 1.7, shot: "aim" },
-  ninho: { hp: 8, r: 14, speed: 0, score: 350, fire: 1.7, shot: "up" },
-  as: { hp: 6, r: 12, speed: 86, score: 600, fire: 1.5, shot: "aim", drop: true },
+  vespa: { hp: 2, r: 12, speed: 72, score: 120, fire: 2.6, shot: "down" },
+  gaviao: { hp: 3, r: 13, speed: 124, score: 220, fire: 1.85, shot: "aim" },
+  bufalo: { hp: 10, r: 19, speed: 48, score: 400, fire: 1.55, shot: "spread" },
+  artilheiro: { hp: 4, r: 13, speed: 58, score: 260, fire: 1.7, shot: "aim" },
+  ninho: { hp: 8, r: 16, speed: 0, score: 350, fire: 1.7, shot: "up" },
+  as: { hp: 6, r: 14, speed: 86, score: 600, fire: 1.5, shot: "aim", drop: true },
 };
 
 const BOSS = {
-  albatroz: { hp: 90, r: 28, score: 5000, attacks: ["spread", "aimed", "rain"] },
-  sentinela: { hp: 120, r: 30, score: 7000, attacks: ["aimed", "ring", "sweep"] },
-  serpente: { hp: 140, r: 26, score: 8500, attacks: ["spread", "ring", "rain"] },
-  tempestade: { hp: 160, r: 32, score: 10000, attacks: ["ring", "aimed", "sweep"] },
-  nadir: { hp: 220, r: 36, score: 15000, attacks: ["spread", "aimed", "ring", "rain", "sweep"] },
+  albatroz: { hp: 90, r: 32, score: 5000, attacks: ["spread", "aimed", "rain"] },
+  sentinela: { hp: 120, r: 34, score: 7000, attacks: ["aimed", "ring", "sweep"] },
+  serpente: { hp: 140, r: 30, score: 8500, attacks: ["spread", "ring", "rain"] },
+  tempestade: { hp: 160, r: 36, score: 10000, attacks: ["ring", "aimed", "sweep"] },
+  nadir: { hp: 220, r: 42, score: 15000, attacks: ["spread", "aimed", "ring", "rain", "sweep"] },
 };
 
 function pool() {
@@ -174,8 +174,8 @@ export class Game {
         }
         const tx = clamp(input.aimCX + (this._aimOffX ?? 0), 16, W - 16);
         const ty = clamp(input.aimCY + (this._aimOffY ?? 0), 40, H - 28);
-        // segue o dedo com leve suavização (estilo shmup mobile)
-        const k = Math.min(1, 18 * dt);
+        // finger-follow rápido (quase 1:1 com o dedo)
+        const k = Math.min(1, 48 * dt);
         p.x += (tx - p.x) * k;
         p.y += (ty - p.y) * k;
         p.x = clamp(p.x, 16, W - 16);
