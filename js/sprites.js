@@ -66,7 +66,7 @@ export function bakeSprites() {
   });
 
   s.vespa = canvas(24, 24, (g) => {
-    g.fillStyle = "#3a3f48";
+    g.fillStyle = "#5a1820";
     g.beginPath();
     g.moveTo(12, 22);
     g.lineTo(16, 12);
@@ -76,7 +76,7 @@ export function bakeSprites() {
     g.lineTo(8, 12);
     g.closePath();
     g.fill();
-    g.fillStyle = "#6a7180";
+    g.fillStyle = "#c43a28";
     g.fillRect(3, 10, 18, 5);
     g.fillStyle = "#c9a227";
     g.beginPath();
@@ -92,7 +92,7 @@ export function bakeSprites() {
   });
 
   s.gaviao = canvas(28, 28, (g) => {
-    g.fillStyle = "#2a3340";
+    g.fillStyle = "#4a1018";
     g.beginPath();
     g.moveTo(14, 26);
     g.lineTo(20, 10);
@@ -100,7 +100,7 @@ export function bakeSprites() {
     g.lineTo(8, 10);
     g.closePath();
     g.fill();
-    g.fillStyle = "#4a5a6a";
+    g.fillStyle = "#e85d2a";
     g.beginPath();
     g.moveTo(14, 12);
     g.lineTo(27, 8);
@@ -117,14 +117,14 @@ export function bakeSprites() {
   });
 
   s.bufalo = canvas(40, 28, (g) => {
-    g.fillStyle = "#3a4632";
+    g.fillStyle = "#3a1810";
     g.fillRect(8, 8, 24, 14);
-    g.fillStyle = "#5a6a44";
+    g.fillStyle = "#c45a20";
     g.fillRect(12, 6, 16, 8);
-    g.fillStyle = "#2a3224";
+    g.fillStyle = "#1a0c08";
     g.fillRect(4, 12, 8, 6);
     g.fillRect(28, 12, 8, 6);
-    g.fillStyle = "#1a2018";
+    g.fillStyle = "#0a0604";
     g.beginPath();
     g.arc(8, 15, 4, 0, Math.PI * 2);
     g.arc(32, 15, 4, 0, Math.PI * 2);
@@ -136,7 +136,7 @@ export function bakeSprites() {
   });
 
   s.artilheiro = canvas(26, 26, (g) => {
-    g.fillStyle = "#4a3a32";
+    g.fillStyle = "#6a2010";
     g.beginPath();
     g.moveTo(13, 24);
     g.lineTo(18, 12);
@@ -144,7 +144,7 @@ export function bakeSprites() {
     g.lineTo(8, 12);
     g.closePath();
     g.fill();
-    g.fillStyle = "#6a5044";
+    g.fillStyle = "#e07030";
     g.fillRect(4, 11, 18, 5);
     g.fillStyle = "#222";
     g.fillRect(12, 6, 2, 8);
@@ -153,11 +153,11 @@ export function bakeSprites() {
   });
 
   s.ninho = canvas(28, 20, (g) => {
-    g.fillStyle = "#6b5a3a";
+    g.fillStyle = "#8a3018";
     g.beginPath();
     g.ellipse(14, 14, 12, 6, 0, 0, Math.PI * 2);
     g.fill();
-    g.fillStyle = "#8a7448";
+    g.fillStyle = "#e09040";
     g.beginPath();
     g.ellipse(14, 12, 9, 5, 0, 0, Math.PI * 2);
     g.fill();
@@ -168,7 +168,7 @@ export function bakeSprites() {
   });
 
   s.as = canvas(28, 28, (g) => {
-    g.fillStyle = "#7a5a12";
+    g.fillStyle = "#8a2008";
     g.beginPath();
     g.moveTo(14, 26);
     g.lineTo(22, 10);
@@ -191,11 +191,11 @@ export function bakeSprites() {
   });
 
   s.albatroz = canvas(80, 52, (g) => {
-    g.fillStyle = "#2e3844";
+    g.fillStyle = "#3a1420";
     g.fillRect(18, 16, 44, 18);
-    g.fillStyle = "#4a5868";
+    g.fillStyle = "#d45028";
     g.fillRect(8, 20, 64, 8);
-    g.fillStyle = "#1a222c";
+    g.fillStyle = "#1a080c";
     g.beginPath();
     g.ellipse(40, 14, 18, 10, 0, 0, Math.PI * 2);
     g.fill();
@@ -209,11 +209,11 @@ export function bakeSprites() {
   });
 
   s.sentinela = canvas(72, 56, (g) => {
-    g.fillStyle = "#4a4030";
+    g.fillStyle = "#5a1810";
     g.fillRect(16, 22, 40, 26);
-    g.fillStyle = "#6a5a3a";
+    g.fillStyle = "#e08030";
     g.fillRect(24, 8, 24, 20);
-    g.fillStyle = "#2a2418";
+    g.fillStyle = "#1a0808";
     g.fillRect(8, 28, 12, 10);
     g.fillRect(52, 28, 12, 10);
     g.fillStyle = "#333";
@@ -224,7 +224,7 @@ export function bakeSprites() {
   });
 
   s.serpente = canvas(88, 40, (g) => {
-    g.fillStyle = "#6a3a1a";
+    g.fillStyle = "#8a1808";
     g.beginPath();
     g.moveTo(6, 20);
     g.quadraticCurveTo(28, 4, 48, 20);
@@ -249,7 +249,7 @@ export function bakeSprites() {
   });
 
   s.tempestade = canvas(76, 76, (g) => {
-    g.fillStyle = "#1a2838";
+    g.fillStyle = "#2a0810";
     g.beginPath();
     g.arc(38, 38, 28, 0, Math.PI * 2);
     g.fill();
@@ -258,7 +258,7 @@ export function bakeSprites() {
     g.beginPath();
     g.arc(38, 38, 22, 0, Math.PI * 1.4);
     g.stroke();
-    g.fillStyle = "#4a6a88";
+    g.fillStyle = "#c04020";
     g.fillRect(20, 34, 36, 8);
     g.fillStyle = "#e0b84a";
     g.beginPath();
@@ -267,14 +267,14 @@ export function bakeSprites() {
   });
 
   s.nadir = canvas(96, 64, (g) => {
-    g.fillStyle = "#2a2e38";
+    g.fillStyle = "#3a1018";
     g.fillRect(8, 22, 80, 22);
-    g.fillStyle = "#4a5060";
+    g.fillStyle = "#d45828";
     g.fillRect(20, 10, 56, 18);
-    g.fillStyle = "#1a1e28";
+    g.fillStyle = "#12060a";
     g.fillRect(0, 26, 16, 10);
     g.fillRect(80, 26, 16, 10);
-    g.fillStyle = "#6a3040";
+    g.fillStyle = "#e04020";
     g.fillRect(40, 40, 16, 12);
     g.fillStyle = "#e0b84a";
     g.fillRect(12, 18, 8, 28);

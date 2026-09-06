@@ -188,7 +188,7 @@ export class Game {
         this.audio.shoot();
       }
       if (input.consumeBomb() && this.bombCd <= 0) this._bomb();
-      if (Math.random() < dt * 28) this.fx.trail(p.x + (Math.random() - 0.5) * 8, p.y + 16);
+      if (Math.random() < dt * 10) this.fx.trail(p.x + (Math.random() - 0.5) * 8, p.y + 16);
     }
 
     this.comboT -= dt;
@@ -536,7 +536,7 @@ export class Game {
       b.y += b.vy * dt;
       if (b.y > H + 12 || b.y < -20 || b.x < -16 || b.x > W + 16) this.eBullets.splice(i, 1);
     }
-    if (this.eBullets.length > 240) this.eBullets.splice(0, 50);
+    if (this.eBullets.length > 180) this.eBullets.splice(0, 60);
     if (this.pBullets.length > 120) this.pBullets.splice(0, 20);
   }
 

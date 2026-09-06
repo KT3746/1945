@@ -82,67 +82,38 @@ export class Renderer {
   }
 
   _sea(ctx, pal, scroll) {
-    // Oceano top-down mais realista: profundidade, caústicas, ondulação
+    // Oceano legível e leve (evita travar no celular no fim da partida)
     ctx.fillStyle = pal.sea0;
     ctx.fillRect(0, 0, W, H);
 
-    // manchas de profundidade (água mais clara/escura)
-    for (let i = 0; i < 28; i++) {
-      const x = (i * 79 + scroll * 0.08) % (W + 80) - 40;
-      const y = ((i * 97 + scroll * 0.55) % (H + 100)) - 50;
-      const rad = 28 + (i % 5) * 10;
-      const g = ctx.createRadialGradient(x, y, 4, x, y, rad);
-      g.addColorStop(0, pal.sea2 + "99");
-      g.addColorStop(0.55, pal.sea1 + "55");
-      g.addColorStop(1, "rgba(0,0,0,0)");
-      // fallback if hex+alpha fails in some browsers — use rgba via globalAlpha
-      ctx.globalAlpha = 0.22;
-      ctx.fillStyle = i % 2 ? pal.sea2 : pal.sea1;
+    ctx.globalAlpha = 0.28;
+    ctx.fillStyle = pal.sea1;
+    for (let i = 0; i < 8; i++) {
+      const y = ((i * 90 + scroll * 0.5) % (H + 90)) - 45;
+      ctx.fillRect(0, y, W, 40);
+    }
+    ctx.globalAlpha = 0.18;
+    ctx.fillStyle = pal.sea2;
+    for (let i = 0; i < 6; i++) {
+      const x = (i * 70 + scroll * 0.1) % (W + 60) - 30;
+      const y = ((i * 110 + scroll * 0.7) % (H + 80)) - 40;
       ctx.beginPath();
-      ctx.ellipse(x, y, rad * 1.3, rad * 0.7, 0, 0, Math.PI * 2);
+      ctx.ellipse(x, y, 50, 22, 0, 0, Math.PI * 2);
       ctx.fill();
     }
     ctx.globalAlpha = 1;
 
-    // caústicas (luz na água)
-    ctx.save();
-    ctx.globalCompositeOperation = "lighter";
-    for (let i = 0; i < 16; i++) {
-      const x = (i * 61 + Math.sin(scroll * 0.01 + i) * 20) % W;
-      const y = ((i * 83 + scroll * 0.9) % (H + 40)) - 20;
-      ctx.globalAlpha = 0.07;
-      ctx.fillStyle = pal.foam;
-      ctx.beginPath();
-      ctx.ellipse(x, y, 18 + (i % 3) * 6, 7 + (i % 2) * 3, i * 0.4, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    ctx.restore();
-    ctx.globalAlpha = 1;
-
-    // cristas de onda
+    ctx.strokeStyle = pal.foam;
     ctx.lineWidth = 1;
-    for (let i = 0; i < 26; i++) {
-      const y = ((i * 30 + scroll * 1.05) % (H + 30)) - 15;
-      ctx.strokeStyle = pal.foam;
-      ctx.globalAlpha = 0.1 + (i % 4) * 0.03;
+    for (let i = 0; i < 14; i++) {
+      const y = ((i * 48 + scroll * 1.0) % (H + 48)) - 24;
+      ctx.globalAlpha = 0.14;
       ctx.beginPath();
-      ctx.moveTo(-4, y);
-      for (let x = 0; x <= W + 4; x += 10) {
-        const bob = Math.sin(x * 0.09 + i * 1.1 + scroll * 0.02) * 2.4
-          + Math.sin(x * 0.03 + i) * 1.2;
-        ctx.lineTo(x, y + bob);
+      ctx.moveTo(0, y);
+      for (let x = 0; x <= W; x += 16) {
+        ctx.lineTo(x, y + Math.sin(x * 0.07 + i + scroll * 0.015) * 2);
       }
       ctx.stroke();
-    }
-    ctx.globalAlpha = 1;
-
-    // espuma pontilhada
-    for (let i = 0; i < 70; i++) {
-      const x = (i * 53 + scroll * 0.15) % W;
-      const y = ((i * 89 + scroll * 1.3) % (H + 6)) - 3;
-      ctx.globalAlpha = 0.12 + (i % 5) * 0.04;
-      ctx.fillStyle = pal.foam;
-      ctx.fillRect(x, y, 2, 1);
     }
     ctx.globalAlpha = 1;
   }
@@ -249,7 +220,20 @@ export class Renderer {
       const sc = 1.35;
       const dw = spr.width * sc;
       const dh = spr.height * sc;
+      // contorno escuro pra destacar do mar
+      ctx.save();
+      ctx.shadowColor = "rgba(0,0,0,0.85)";
+      ctx.shadowBlur = 0;
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = "#140c08";
+      ctx.strokeRect(e.x - dw / 2 - 1, e.y - dh / 2 - 1, dw + 2, dh + 2);
       ctx.drawImage(spr, e.x - dw / 2, e.y - dh / 2, dw, dh);
+      // vinheta quente por cima (contraste com azul do mar)
+      ctx.globalAlpha = 0.22;
+      ctx.fillStyle = "#ff6a2a";
+      ctx.fillRect(e.x - dw / 2, e.y - dh / 2, dw, dh);
+      ctx.globalAlpha = 1;
+      ctx.restore();
       ctx.filter = "none";
       if (e.kind === "vespa" || e.kind === "gaviao" || e.kind === "as" || e.kind === "artilheiro") {
         drawProp(ctx, e.x, e.y + spr.height / 2 - 4, this.time * 1.2 + e.phase, "rgba(200,200,180,0.35)");

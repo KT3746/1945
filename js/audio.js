@@ -80,7 +80,7 @@ export class AudioSys {
     this._beat -= dt;
     if (this._beat <= 0) {
       this._groove();
-      this._beat = this._intense ? 0.18 : 0.28;
+      this._beat = this._intense ? 0.26 : 0.38;
     }
   }
 
