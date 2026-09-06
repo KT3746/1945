@@ -85,7 +85,10 @@ export class UI {
     document.getElementById("btn-resume").addEventListener("click", go(() => this.resume()));
     document.getElementById("btn-restart").addEventListener("click", go(() => this._play()));
     document.getElementById("btn-menu").addEventListener("click", go(() => this.toTitle()));
-    document.getElementById("btn-next").addEventListener("click", go(() => this.next()));
+    const btnNext = document.getElementById("btn-next");
+    const doNext = go(() => this.next());
+    btnNext.addEventListener("click", doNext);
+    btnNext.addEventListener("pointerup", doNext);
     document.getElementById("btn-again").addEventListener("click", go(() => this._play()));
     document.getElementById("btn-over-menu").addEventListener("click", go(() => this.toTitle()));
     this.els.mute.addEventListener("click", go(() => {
@@ -181,6 +184,7 @@ export class UI {
     if (m === "stageclear") {
       this.input?.clearPlay?.();
       this._lockPlay();
+      document.body.classList.add("modal-open");
       const looped = this.game.stageIndex === 4;
       const meta = STAGE_META[this.game.stageIndex];
       this.els.stageEyebrow.textContent = this.game.loop && this.game.stageIndex === 4

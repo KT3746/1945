@@ -11,12 +11,17 @@ const game = new Game(audio);
 const canvas = document.getElementById("game");
 const renderer = new Renderer(canvas);
 const ui = new UI(game, audio, input);
+const touchNav = document.getElementById("touch");
 
 let last = performance.now();
 let lastMode = game.mode;
 
 function releaseTouch() {
   try {
+    const pid = input._aim && input._aim.id;
+    if (canvas && pid != null && canvas.releasePointerCapture) {
+      try { canvas.releasePointerCapture(pid); } catch (_) {}
+    }
     input.clearPlay?.();
     input.aimActive = false;
     input.aimDX = 0;
@@ -27,13 +32,15 @@ function releaseTouch() {
       input._aim.id = null;
     }
     if (typeof input._endStick === "function") input._endStick();
-    // solta capture do canvas (causa "travou" na tela de vitória)
-    if (canvas && canvas.releasePointerCapture) {
-      try {
-        // ignore if none
-      } catch (_) {}
-    }
+    input._fireBtn = false;
+    input._bombBtn = false;
   } catch (_) {}
+}
+
+function setOverlayMode(on) {
+  document.body.classList.toggle("modal-open", !!on);
+  if (touchNav) touchNav.style.visibility = on ? "hidden" : "";
+  if (on) releaseTouch();
 }
 
 function frame(now) {
@@ -55,13 +62,24 @@ function frame(now) {
   }
 
   game.update(dt, input);
-  audio.update(dt);
-  audio.setIntense(game.boss && game.mode === "playing" ? 1 : 0);
+  // durante overlay, não atualiza música intensa / reduz trabalho
+  if (game.mode === "playing") {
+    audio.update(dt);
+    audio.setIntense(game.boss ? 1 : 0);
+  }
   renderer.draw(game);
 
   if (game.mode !== lastMode) {
+    const overlay =
+      game.mode === "stageclear" ||
+      game.mode === "gameover" ||
+      game.mode === "paused" ||
+      game.mode === "title" ||
+      game.mode === "howto";
+    setOverlayMode(overlay && game.mode !== "playing");
     if (game.mode === "stageclear" || game.mode === "gameover" || game.mode === "paused") {
       releaseTouch();
+      try { audio.ui(); } catch (_) {}
     }
     ui.onMode();
     lastMode = game.mode;

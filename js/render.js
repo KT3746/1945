@@ -245,51 +245,19 @@ export class Renderer {
   _pickups(ctx, game) {
     for (const u of game.pickups) {
       const bob = Math.sin(u.t * 6) * 2;
-      if (u.kind === "bomb" && this.sprites.bomb) {
-        const spr = this.sprites.bomb;
+      const set = this.sprites.pickup || {};
+      const spr = set[u.kind] || this.sprites.bomb;
+      if (spr) {
+        // sombra suave
+        ctx.globalAlpha = 0.35;
+        ctx.fillStyle = "#000";
+        ctx.beginPath();
+        ctx.ellipse(u.x, u.y + bob + 12, 10, 3, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.globalAlpha = 1;
         ctx.drawImage(spr, u.x - spr.width / 2, u.y + bob - spr.height / 2);
-        continue;
       }
-      ctx.fillStyle = "#111c";
-      ctx.beginPath();
-      ctx.arc(u.x, u.y + bob + 2, 13, 0, Math.PI * 2);
-      ctx.fill();
-      const col =
-        u.kind === "shot"
-          ? "#fff06a"
-          : u.kind === "spread"
-            ? "#e0b84a"
-            : u.kind === "rapid"
-              ? "#e85d4c"
-              : u.kind === "shield"
-                ? "#7ec8e3"
-                : u.kind === "bomb"
-                  ? "#6aa0e8"
-                  : "#ffe08a";
-      ctx.fillStyle = col;
-      ctx.beginPath();
-      ctx.moveTo(u.x, u.y + bob - 14);
-      ctx.lineTo(u.x + 14, u.y + bob);
-      ctx.lineTo(u.x, u.y + bob + 14);
-      ctx.lineTo(u.x - 14, u.y + bob);
-      ctx.closePath();
-      ctx.fill();
-      ctx.strokeStyle = "#140c08";
-      ctx.lineWidth = 1.5;
-      ctx.stroke();
-      ctx.fillStyle = "#1a1208";
-      ctx.font = "800 10px Oswald, sans-serif";
-      ctx.textAlign = "center";
-      const lab = PICKUP_LABEL[u.kind] || "BONUS";
-      ctx.fillText(lab[0], u.x, u.y + bob + 3);
-      ctx.font = "800 9px Barlow, sans-serif";
-      ctx.fillStyle = "#fff8e0";
-      ctx.strokeStyle = "#140c08";
-      ctx.lineWidth = 3;
-      ctx.strokeText(lab, u.x, u.y + bob + 24);
-      ctx.fillText(lab, u.x, u.y + bob + 24);
     }
-    ctx.textAlign = "left";
   }
 
   _banner(ctx, game) {

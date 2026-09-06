@@ -632,14 +632,15 @@ export class Game {
       this.boss = null;
       this.pendingBoss = false;
       this.cleared = true;
-      // limpa o campo na hora (evita pico de CPU/tiros no celular)
       this.eBullets.length = 0;
-      this.enemies.forEach((x) => {
-        if (!x.boss) x.dead = true;
-      });
+      this.pBullets.length = 0;
+      this.pickups.length = 0;
+      for (const x of this.enemies) {
+        if (x !== e) x.dead = true;
+      }
       this.fx.reset();
-      this.fx.boom(e.x, e.y, 16, "#e0b84a");
-      this.audio.bigBoom();
+      // som leve — bigBoom no celular engasga o main thread
+      this.audio.ui();
     }
   }
 
@@ -731,9 +732,11 @@ export class Game {
     if (this.cleared && !alive) {
       this.eBullets.length = 0;
       this.pBullets.length = 0;
+      this.pickups.length = 0;
+      this.enemies.length = 0;
       this.fx.reset();
       this.mode = "stageclear";
-      this.audio.stage();
+      // sem audio.stage() pesado aqui — UI toca bip leve
       this._saveHigh();
     }
   }

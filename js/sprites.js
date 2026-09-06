@@ -286,32 +286,111 @@ export function bakeSprites() {
     g.fillRect(64, 8, 4, 12);
   });
 
-  s.bomb = canvas(28, 28, (g) => {
-    // corpo
-    g.fillStyle = "#2a3548";
+  // Ícones de power-up (sem texto) — estilo shmup clássico
+  s.pickup = {};
+  s.pickup.shot = canvas(32, 32, (g) => {
+    g.fillStyle = "#0a1820";
+    g.beginPath(); g.arc(16, 16, 14, 0, Math.PI * 2); g.fill();
+    g.fillStyle = "#ffe08a";
+    g.beginPath(); g.arc(16, 16, 12, 0, Math.PI * 2); g.fill();
+    g.fillStyle = "#c48a1a";
+    g.beginPath(); g.arc(16, 16, 12, 0, Math.PI * 2); g.stroke();
+    g.fillStyle = "#1a1208";
     g.beginPath();
-    g.arc(14, 16, 9, 0, Math.PI * 2);
-    g.fill();
-    g.fillStyle = "#4a90d8";
-    g.beginPath();
-    g.arc(14, 16, 7, 0, Math.PI * 2);
-    g.fill();
-    g.fillStyle = "#9ad4ff";
-    g.beginPath();
-    g.arc(11, 13, 2.2, 0, Math.PI * 2);
-    g.fill();
-    // pavio
-    g.strokeStyle = "#e0b84a";
-    g.lineWidth = 2;
-    g.beginPath();
-    g.moveTo(14, 7);
-    g.quadraticCurveTo(18, 4, 16, 2);
-    g.stroke();
+    g.moveTo(16, 6); g.lineTo(20, 18); g.lineTo(16, 15); g.lineTo(12, 18);
+    g.closePath(); g.fill();
+    g.fillStyle = "#fff6c8";
+    g.fillRect(15, 8, 2, 10);
+  });
+  s.pickup.spread = canvas(32, 32, (g) => {
+    g.fillStyle = "#0a1820";
+    g.beginPath(); g.arc(16, 16, 14, 0, Math.PI * 2); g.fill();
+    g.fillStyle = "#e0b84a";
+    g.beginPath(); g.arc(16, 16, 12, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = "#1a1208"; g.lineWidth = 1.5;
+    g.beginPath(); g.arc(16, 16, 12, 0, Math.PI * 2); g.stroke();
+    g.fillStyle = "#1a1208";
+    for (const [dx, rot] of [[0, 0], [-7, -0.45], [7, 0.45]]) {
+      g.save();
+      g.translate(16 + dx, 17);
+      g.rotate(rot);
+      g.beginPath();
+      g.moveTo(0, -8); g.lineTo(3, 4); g.lineTo(0, 2); g.lineTo(-3, 4);
+      g.closePath(); g.fill();
+      g.restore();
+    }
+  });
+  s.pickup.rapid = canvas(32, 32, (g) => {
+    g.fillStyle = "#0a1820";
+    g.beginPath(); g.arc(16, 16, 14, 0, Math.PI * 2); g.fill();
     g.fillStyle = "#e85d4c";
+    g.beginPath(); g.arc(16, 16, 12, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = "#1a1208"; g.lineWidth = 1.5;
+    g.beginPath(); g.arc(16, 16, 12, 0, Math.PI * 2); g.stroke();
+    g.fillStyle = "#fff0c0";
     g.beginPath();
-    g.arc(16, 2, 2.2, 0, Math.PI * 2);
+    g.moveTo(11, 7); g.lineTo(20, 14); g.lineTo(15, 14); g.lineTo(19, 25);
+    g.lineTo(10, 16); g.lineTo(15, 16); g.closePath(); g.fill();
+  });
+  s.pickup.shield = canvas(32, 32, (g) => {
+    g.fillStyle = "#0a1820";
+    g.beginPath(); g.arc(16, 16, 14, 0, Math.PI * 2); g.fill();
+    g.fillStyle = "#5ec0e8";
+    g.beginPath(); g.arc(16, 16, 12, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = "#1a1208"; g.lineWidth = 1.5;
+    g.beginPath(); g.arc(16, 16, 12, 0, Math.PI * 2); g.stroke();
+    g.fillStyle = "#e8f7ff";
+    g.beginPath();
+    g.moveTo(16, 7);
+    g.quadraticCurveTo(24, 10, 23, 18);
+    g.quadraticCurveTo(16, 26, 16, 26);
+    g.quadraticCurveTo(16, 26, 9, 18);
+    g.quadraticCurveTo(8, 10, 16, 7);
+    g.fill();
+    g.fillStyle = "#3a90c0";
+    g.beginPath();
+    g.moveTo(16, 10);
+    g.quadraticCurveTo(21, 12, 20, 17);
+    g.quadraticCurveTo(16, 22, 16, 22);
+    g.quadraticCurveTo(16, 22, 12, 17);
+    g.quadraticCurveTo(11, 12, 16, 10);
     g.fill();
   });
+  s.pickup.bomb = canvas(32, 32, (g) => {
+    g.fillStyle = "#0a1820";
+    g.beginPath(); g.arc(16, 16, 14, 0, Math.PI * 2); g.fill();
+    g.fillStyle = "#4a90d8";
+    g.beginPath(); g.arc(16, 16, 12, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = "#1a1208"; g.lineWidth = 1.5;
+    g.beginPath(); g.arc(16, 16, 12, 0, Math.PI * 2); g.stroke();
+    g.fillStyle = "#1a2838";
+    g.beginPath(); g.arc(16, 18, 7, 0, Math.PI * 2); g.fill();
+    g.fillStyle = "#9ad4ff";
+    g.beginPath(); g.arc(13, 15, 2, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = "#e0b84a"; g.lineWidth = 2;
+    g.beginPath(); g.moveTo(16, 10); g.quadraticCurveTo(20, 6, 18, 4); g.stroke();
+    g.fillStyle = "#e85d4c";
+    g.beginPath(); g.arc(18, 4, 2, 0, Math.PI * 2); g.fill();
+  });
+  s.pickup.medal = canvas(32, 32, (g) => {
+    g.fillStyle = "#0a1820";
+    g.beginPath(); g.arc(16, 16, 14, 0, Math.PI * 2); g.fill();
+    g.fillStyle = "#ffe08a";
+    g.beginPath(); g.arc(16, 16, 12, 0, Math.PI * 2); g.fill();
+    g.strokeStyle = "#1a1208"; g.lineWidth = 1.5;
+    g.beginPath(); g.arc(16, 16, 12, 0, Math.PI * 2); g.stroke();
+    g.fillStyle = "#c48a1a";
+    g.beginPath();
+    const R = 8, r = 3.5;
+    g.moveTo(16, 16 - R);
+    for (let i = 0; i < 10; i++) {
+      const a = -Math.PI / 2 + (i * Math.PI) / 5;
+      const rad = i % 2 === 0 ? R : r;
+      g.lineTo(16 + Math.cos(a) * rad, 16 + Math.sin(a) * rad);
+    }
+    g.closePath(); g.fill();
+  });
+  s.bomb = s.pickup.bomb;
 
   s.island = [
     canvas(80, 48, (g) => island(g, 80, 48, "#2a6a3a", "#1a4a28")),
