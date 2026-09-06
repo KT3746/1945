@@ -87,9 +87,7 @@ export class UI {
     document.getElementById("btn-restart").addEventListener("click", go(() => this._play()));
     document.getElementById("btn-menu").addEventListener("click", go(() => this.toTitle()));
     const btnNext = document.getElementById("btn-next");
-    const doNext = go(() => this.next());
-    btnNext.addEventListener("click", doNext);
-    btnNext.addEventListener("pointerup", doNext);
+    if (btnNext) btnNext.addEventListener("click", go(() => this.next()));
     document.getElementById("btn-again").addEventListener("click", go(() => this._play()));
     document.getElementById("btn-over-menu").addEventListener("click", go(() => this.toTitle()));
     this.els.mute.addEventListener("click", go(() => {
