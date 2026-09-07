@@ -15,8 +15,10 @@ export class Renderer {
     this.canvas = canvas;
     this.ctx = canvas.getContext("2d");
     this.sprites = bakeSprites();
-    this.islands = this._scatter(9, 0);
-    this.clouds = this._scatter(11, 1);
+    this.islands = this._scatter(11, 0);
+    this.clouds = this._scatter(14, 1);
+    this.birds = this._scatter(6, 2);
+    this.debris = this._scatter(8, 3);
     this.time = 0;
   }
 
@@ -95,73 +97,134 @@ export class Renderer {
   }
 
   _sea(ctx, pal, scroll, key) {
-    // céu / horizonte distinto por fase
-    if (key === "dusk") {
-      const sky = ctx.createLinearGradient(0, 0, 0, H * 0.45);
-      sky.addColorStop(0, "#2a1848");
-      sky.addColorStop(0.55, "#c45838");
+    if (key === "tropic") {
+      const sky = ctx.createLinearGradient(0, 0, 0, H * 0.38);
+      sky.addColorStop(0, "#6ec8f0");
+      sky.addColorStop(0.55, "#3aa0c8");
       sky.addColorStop(1, pal.sea0);
       ctx.fillStyle = sky;
-      ctx.fillRect(0, 0, W, H * 0.42);
-      ctx.fillStyle = pal.sea0;
-      ctx.fillRect(0, H * 0.4, W, H);
-      // sol
-      ctx.fillStyle = "#ffb060";
+      ctx.fillRect(0, 0, W, H * 0.36);
+      const sea = ctx.createLinearGradient(0, H * 0.3, 0, H);
+      sea.addColorStop(0, "#1a8ab0");
+      sea.addColorStop(0.4, pal.sea1);
+      sea.addColorStop(1, "#062838");
+      ctx.fillStyle = sea;
+      ctx.fillRect(0, H * 0.32, W, H);
+      // sol / brilho
+      ctx.fillStyle = "#fff6c0";
+      ctx.globalAlpha = 0.55;
       ctx.beginPath();
-      ctx.arc(W * 0.72, H * 0.28, 28, 0, Math.PI * 2);
+      ctx.arc(W * 0.78, H * 0.12, 18, 0, Math.PI * 2);
       ctx.fill();
-      ctx.globalAlpha = 0.25;
-      ctx.fillStyle = "#ff8040";
+      ctx.globalAlpha = 0.15;
       ctx.beginPath();
-      ctx.arc(W * 0.72, H * 0.28, 48, 0, Math.PI * 2);
+      ctx.arc(W * 0.78, H * 0.12, 40, 0, Math.PI * 2);
       ctx.fill();
+      ctx.globalAlpha = 1;
+      // faixa turquesa rasa
+      ctx.fillStyle = "#5ee0d0";
+      ctx.globalAlpha = 0.12;
+      for (let i = 0; i < 4; i++) {
+        const y = H * 0.55 + ((i * 70 + scroll * 0.3) % 120);
+        ctx.fillRect(0, y, W, 18);
+      }
+      ctx.globalAlpha = 1;
+    } else if (key === "overcast") {
+      const sky = ctx.createLinearGradient(0, 0, 0, H);
+      sky.addColorStop(0, "#4a5a68");
+      sky.addColorStop(0.25, "#2a3a48");
+      sky.addColorStop(1, "#152028");
+      ctx.fillStyle = sky;
+      ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = "#3a4a58";
+      ctx.globalAlpha = 0.2;
+      for (let i = 0; i < 6; i++) {
+        const y = ((i * 110 + scroll * 0.4) % (H + 110)) - 55;
+        ctx.fillRect(0, y, W, 40);
+      }
+      ctx.globalAlpha = 1;
+    } else if (key === "dusk") {
+      const sky = ctx.createLinearGradient(0, 0, 0, H * 0.5);
+      sky.addColorStop(0, "#1a1040");
+      sky.addColorStop(0.35, "#c44860");
+      sky.addColorStop(0.7, "#e87838");
+      sky.addColorStop(1, "#3a1840");
+      ctx.fillStyle = sky;
+      ctx.fillRect(0, 0, W, H * 0.48);
+      const sea = ctx.createLinearGradient(0, H * 0.42, 0, H);
+      sea.addColorStop(0, "#6a2858");
+      sea.addColorStop(0.5, "#2a1848");
+      sea.addColorStop(1, "#0a0818");
+      ctx.fillStyle = sea;
+      ctx.fillRect(0, H * 0.45, W, H);
+      // sol poente
+      ctx.fillStyle = "#ffb048";
+      ctx.beginPath();
+      ctx.arc(W * 0.5, H * 0.42, 34, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 0.3;
+      ctx.fillStyle = "#ff6030";
+      ctx.beginPath();
+      ctx.arc(W * 0.5, H * 0.42, 58, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 0.2;
+      ctx.fillStyle = "#ff9040";
+      ctx.fillRect(0, H * 0.4, W, 24);
       ctx.globalAlpha = 1;
     } else if (key === "storm") {
-      ctx.fillStyle = pal.sea0;
+      const sky = ctx.createLinearGradient(0, 0, 0, H);
+      sky.addColorStop(0, "#0a1018");
+      sky.addColorStop(0.3, "#152838");
+      sky.addColorStop(1, "#061018");
+      ctx.fillStyle = sky;
       ctx.fillRect(0, 0, W, H);
-      ctx.fillStyle = "#0a1828";
-      ctx.globalAlpha = 0.5;
-      ctx.fillRect(0, 0, W, H * 0.35);
+      ctx.fillStyle = "#1a3048";
+      ctx.globalAlpha = 0.25;
+      for (let i = 0; i < 5; i++) {
+        const y = ((i * 140 + scroll * 0.85) % (H + 140)) - 70;
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        for (let x = 0; x <= W; x += 16) {
+          ctx.lineTo(x, y + Math.sin(x * 0.08 + i) * 10);
+        }
+        ctx.lineTo(W, y + 50);
+        ctx.lineTo(0, y + 50);
+        ctx.fill();
+      }
       ctx.globalAlpha = 1;
-    } else if (key === "fortress") {
+    } else {
+      // fortress
       const g = ctx.createLinearGradient(0, 0, 0, H);
-      g.addColorStop(0, "#1a1428");
-      g.addColorStop(0.4, pal.sea0);
-      g.addColorStop(1, "#0a0810");
+      g.addColorStop(0, "#120c20");
+      g.addColorStop(0.35, "#1a1428");
+      g.addColorStop(0.7, "#0c1018");
+      g.addColorStop(1, "#08060e");
       ctx.fillStyle = g;
       ctx.fillRect(0, 0, W, H);
-    } else {
-      ctx.fillStyle = pal.sea0;
-      ctx.fillRect(0, 0, W, H);
-      if (key === "tropic") {
-        const g = ctx.createLinearGradient(0, 0, 0, H * 0.3);
-        g.addColorStop(0, pal.sky);
-        g.addColorStop(1, pal.sea0);
-        ctx.fillStyle = g;
-        ctx.fillRect(0, 0, W, H * 0.28);
+      // grade industrial de fundo
+      ctx.strokeStyle = "#ffffff08";
+      ctx.lineWidth = 1;
+      for (let x = 0; x < W; x += 28) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x, H);
+        ctx.stroke();
       }
     }
 
-    const band = key === "storm" ? 0.14 : key === "tropic" ? 0.28 : 0.2;
-    ctx.globalAlpha = band;
-    ctx.fillStyle = pal.sea1;
-    const bands = key === "tropic" ? 6 : 5;
-    for (let i = 0; i < bands; i++) {
-      const y = ((i * 130 + scroll * (key === "storm" ? 0.7 : 0.45)) % (H + 130)) - 65;
-      ctx.fillRect(0, y, W, key === "dusk" ? 36 : 50);
-    }
-    ctx.globalAlpha = 1;
+    // ondulação comum (parâmetros por fase)
+    const foamA = key === "tropic" ? 0.18 : key === "storm" ? 0.1 : 0.12;
+    const amp = key === "storm" ? 4 : key === "tropic" ? 2.6 : key === "fortress" ? 1.2 : 2;
+    const waves = key === "storm" ? 16 : key === "fortress" ? 6 : 11;
     ctx.strokeStyle = pal.foam;
-    ctx.lineWidth = key === "tropic" ? 1.4 : 1;
-    const waves = key === "storm" ? 14 : 10;
-    const amp = key === "storm" ? 3.2 : key === "tropic" ? 2.4 : 1.8;
+    ctx.lineWidth = key === "tropic" ? 1.5 : 1;
     for (let i = 0; i < waves; i++) {
-      const y = ((i * 64 + scroll * (key === "fortress" ? 0.55 : 0.95)) % (H + 64)) - 32;
-      ctx.globalAlpha = key === "overcast" ? 0.08 : 0.12;
+      const y = ((i * 58 + scroll * (key === "storm" ? 1.15 : key === "fortress" ? 0.4 : 0.9)) % (H + 58)) - 28;
+      ctx.globalAlpha = foamA;
       ctx.beginPath();
       ctx.moveTo(0, y);
-      for (let x = 0; x <= W; x += key === "storm" ? 14 : 20) {
-        ctx.lineTo(x, y + Math.sin(x * 0.06 + i + scroll * 0.01) * amp);
+      for (let x = 0; x <= W; x += key === "storm" ? 12 : 18) {
+        ctx.lineTo(x, y + Math.sin(x * 0.07 + i + scroll * 0.012) * amp);
       }
       ctx.stroke();
     }
@@ -169,146 +232,162 @@ export class Renderer {
   }
 
   _islands(ctx, scroll, key) {
-    if (key === "storm") {
-      // poucos rochedos escuros
-      for (let i = 0; i < 4; i++) {
-        const it = this.islands[i];
-        const y = (it.y + scroll) % (H + 160) - 80;
-        ctx.fillStyle = "#1a2430";
+    const pack =
+      key === "tropic" ? this.sprites.islandPalm :
+      key === "overcast" ? this.sprites.islandRock :
+      key === "dusk" ? this.sprites.islandDusk :
+      key === "storm" ? this.sprites.islandRock :
+      key === "fortress" ? this.sprites.plat :
+      this.sprites.island;
+    const list = key === "storm" ? this.islands.slice(0, 5) : this.islands;
+    const mul = key === "fortress" ? 0.75 : key === "storm" ? 0.9 : 0.55;
+    for (let i = 0; i < list.length; i++) {
+      const it = list[i];
+      const y = (it.y + scroll * (mul / 0.55)) % (H + 170) - 85;
+      const spr = pack[it.i % pack.length];
+      const s = it.s * (key === "tropic" ? 1.05 : key === "fortress" ? 1.15 : 1);
+      if (key === "storm") {
+        ctx.globalAlpha = 0.75;
+        ctx.filter = "brightness(0.55)";
+      }
+      ctx.drawImage(spr, it.x - spr.width * s * 0.5, y, spr.width * s, spr.height * s);
+      ctx.filter = "none";
+      ctx.globalAlpha = 1;
+      // sombra na água
+      if (key !== "fortress") {
+        ctx.fillStyle = "#00000033";
         ctx.beginPath();
-        ctx.moveTo(it.x - 22, y + 18);
-        ctx.lineTo(it.x - 8, y);
-        ctx.lineTo(it.x + 14, y + 6);
-        ctx.lineTo(it.x + 20, y + 20);
-        ctx.closePath();
+        ctx.ellipse(it.x, y + spr.height * s * 0.85, spr.width * s * 0.35, 5, 0, 0, Math.PI * 2);
         ctx.fill();
       }
-      return;
     }
-    if (key === "fortress") {
-      for (let i = 0; i < this.islands.length; i++) {
-        const it = this.islands[i];
-        const y = (it.y + scroll * 0.8) % (H + 180) - 90;
-        const w = 40 + (i % 3) * 18;
-        ctx.fillStyle = i % 2 ? "#3a3048" : "#2a2038";
-        ctx.fillRect(it.x - w / 2, y, w, 14);
-        ctx.fillStyle = "#e0b84a55";
-        ctx.fillRect(it.x - w / 2, y, w, 2);
-        ctx.fillStyle = "#ff6a4a88";
-        if (i % 3 === 0) ctx.fillRect(it.x - 4, y - 10, 3, 10);
+    // pássaros só no trópico / dusk
+    if (key === "tropic" || key === "dusk") {
+      ctx.strokeStyle = key === "dusk" ? "#2a1018" : "#1a3040";
+      ctx.lineWidth = 1.5;
+      for (const b of this.birds) {
+        const y = (b.y + scroll * 0.25) % (H + 100) - 40;
+        const x = (b.x + this.time * 12 + b.i * 20) % (W + 40) - 20;
+        ctx.globalAlpha = 0.45;
+        ctx.beginPath();
+        ctx.moveTo(x - 5, y);
+        ctx.quadraticCurveTo(x, y - 4, x + 5, y);
+        ctx.stroke();
       }
-      return;
-    }
-    if (key === "overcast") {
-      for (const it of this.islands) {
-        const y = (it.y + scroll) % (H + 160) - 80;
-        const spr = this.sprites.island[it.i];
-        ctx.save();
-        ctx.globalAlpha = 0.85;
-        ctx.filter = "grayscale(0.7) brightness(0.75)";
-        ctx.drawImage(spr, it.x - spr.width * it.s * 0.5, y, spr.width * it.s, spr.height * it.s);
-        ctx.restore();
-      }
-      return;
-    }
-    if (key === "dusk") {
-      for (const it of this.islands) {
-        const y = (it.y + scroll) % (H + 160) - 80;
-        const spr = this.sprites.island[it.i];
-        ctx.save();
-        ctx.filter = "brightness(0.35) sepia(0.6)";
-        ctx.drawImage(spr, it.x - spr.width * it.s * 0.5, y, spr.width * it.s * 1.05, spr.height * it.s);
-        ctx.restore();
-      }
-      return;
-    }
-    // tropic — ilhas verdes cheias
-    for (const it of this.islands) {
-      const y = (it.y + scroll) % (H + 160) - 80;
-      const spr = this.sprites.island[it.i];
-      ctx.drawImage(spr, it.x - spr.width * it.s * 0.5, y, spr.width * it.s, spr.height * it.s);
+      ctx.globalAlpha = 1;
     }
   }
 
   _clouds(ctx, scroll, pal, key) {
     if (key === "fortress") return;
-    let a = 0.28;
-    if (key === "storm") a = 0.45;
-    else if (key === "overcast") a = 0.4;
-    else if (key === "dusk") a = 0.18;
-    else if (key === "tropic") a = 0.22;
+    const pack =
+      key === "storm" || key === "overcast" ? this.sprites.cloudDark :
+      key === "dusk" ? this.sprites.cloudDusk :
+      this.sprites.cloud;
+    let a = key === "tropic" ? 0.24 : key === "storm" ? 0.5 : key === "overcast" ? 0.42 : 0.28;
+    const spd = key === "storm" ? 1.5 : key === "overcast" ? 0.7 : 1;
     ctx.globalAlpha = a;
-    const spd = key === "storm" ? 1.4 : 1;
     for (const it of this.clouds) {
-      const y = (it.y + scroll * spd) % (H + 180) - 90;
-      const spr = this.sprites.cloud[it.i];
-      if (key === "storm" || key === "overcast") {
-        ctx.save();
-        ctx.filter = "brightness(0.55)";
-        ctx.drawImage(spr, it.x - 20, y, spr.width * 1.3, spr.height * 1.2);
-        ctx.restore();
-      } else if (key === "dusk") {
-        ctx.save();
-        ctx.filter = "sepia(0.5) hue-rotate(-20deg)";
-        ctx.drawImage(spr, it.x - 20, y);
-        ctx.restore();
-      } else {
-        ctx.drawImage(spr, it.x - 20, y);
-      }
+      const y = (it.y + scroll * spd) % (H + 200) - 100;
+      const spr = pack[it.i % pack.length];
+      const sc = key === "storm" ? 1.45 : key === "overcast" ? 1.25 : 1;
+      ctx.drawImage(spr, it.x - 24, y, spr.width * sc, spr.height * sc);
     }
     ctx.globalAlpha = 1;
   }
 
   _stageFX(ctx, scroll, key) {
-    if (key === "storm") {
-      if (Math.random() < 0.02) {
-        ctx.fillStyle = "rgba(200,230,255,0.22)";
-        ctx.fillRect(0, 0, W, H);
-      }
-      ctx.strokeStyle = "rgba(180,210,255,0.18)";
-      ctx.lineWidth = 1;
-      for (let i = 0; i < 18; i++) {
-        const x = (i * 37 + scroll * 2.2) % (W + 20) - 10;
-        ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x - 8, H);
-        ctx.stroke();
-      }
-    } else if (key === "fortress") {
-      ctx.save();
-      ctx.globalAlpha = 0.16;
-      ctx.fillStyle = "#e0b84a";
-      ctx.beginPath();
-      ctx.moveTo(40, H);
-      ctx.lineTo(80 + Math.sin(scroll * 0.02) * 40, 0);
-      ctx.lineTo(140 + Math.sin(scroll * 0.02) * 40, 0);
-      ctx.lineTo(90, H);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.moveTo(240, H);
-      ctx.lineTo(200 + Math.cos(scroll * 0.015) * 50, 0);
-      ctx.lineTo(270 + Math.cos(scroll * 0.015) * 50, 0);
-      ctx.lineTo(300, H);
-      ctx.fill();
-      ctx.restore();
-      // faíscas
-      ctx.fillStyle = "#ff9a4a";
-      for (let i = 0; i < 6; i++) {
-        const x = (i * 61 + scroll * 0.3) % W;
-        const y = (i * 97 + scroll * 0.8) % H;
-        ctx.globalAlpha = 0.35;
+    if (key === "tropic") {
+      // brilho na água
+      ctx.fillStyle = "#fff8c0";
+      for (let i = 0; i < 10; i++) {
+        const x = (i * 41 + scroll * 0.2) % W;
+        const y = H * 0.5 + ((i * 73 + scroll * 0.5) % (H * 0.45));
+        ctx.globalAlpha = 0.12 + (i % 3) * 0.04;
         ctx.fillRect(x, y, 2, 2);
       }
       ctx.globalAlpha = 1;
-    } else if (key === "tropic") {
-      ctx.fillStyle = "rgba(255,255,200,0.04)";
-      ctx.fillRect(0, 0, W, H * 0.25);
     } else if (key === "overcast") {
-      ctx.fillStyle = "rgba(40,60,80,0.18)";
+      ctx.fillStyle = "rgba(30,45,60,0.22)";
       ctx.fillRect(0, 0, W, H);
+      // chuvisco leve
+      ctx.strokeStyle = "rgba(180,200,220,0.12)";
+      for (let i = 0; i < 22; i++) {
+        const x = (i * 29 + scroll * 1.2) % W;
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x - 4, H);
+        ctx.stroke();
+      }
     } else if (key === "dusk") {
-      ctx.fillStyle = "rgba(255,100,40,0.08)";
+      ctx.fillStyle = "rgba(255,80,40,0.1)";
       ctx.fillRect(0, 0, W, H);
+      // reflexo do sol no mar
+      const rg = ctx.createRadialGradient(W / 2, H * 0.55, 4, W / 2, H * 0.55, 90);
+      rg.addColorStop(0, "rgba(255,180,80,0.25)");
+      rg.addColorStop(1, "rgba(255,100,40,0)");
+      ctx.fillStyle = rg;
+      ctx.fillRect(W / 2 - 90, H * 0.45, 180, 160);
+    } else if (key === "storm") {
+      if (Math.random() < 0.025) {
+        ctx.fillStyle = "rgba(210,230,255,0.28)";
+        ctx.fillRect(0, 0, W, H);
+      }
+      // chuva forte
+      ctx.strokeStyle = "rgba(170,200,230,0.22)";
+      ctx.lineWidth = 1;
+      for (let i = 0; i < 28; i++) {
+        const x = (i * 23 + scroll * 3.2) % (W + 30) - 15;
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x - 12, H);
+        ctx.stroke();
+      }
+      // nuvem baixa
+      ctx.fillStyle = "#00000044";
+      ctx.fillRect(0, 0, W, 50);
+    } else if (key === "fortress") {
+      // holofotes
+      ctx.save();
+      ctx.globalAlpha = 0.14;
+      ctx.fillStyle = "#e0b84a";
+      const sway = Math.sin(scroll * 0.02) * 45;
+      ctx.beginPath();
+      ctx.moveTo(50, H);
+      ctx.lineTo(90 + sway, 0);
+      ctx.lineTo(150 + sway, 0);
+      ctx.lineTo(100, H);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(260, H);
+      ctx.lineTo(220 - sway * 0.7, 0);
+      ctx.lineTo(290 - sway * 0.7, 0);
+      ctx.lineTo(310, H);
+      ctx.fill();
+      ctx.restore();
+      // faíscas / brasas
+      for (let i = 0; i < 10; i++) {
+        const x = (i * 53 + scroll * 0.35) % W;
+        const y = (i * 89 + scroll * 0.9) % H;
+        ctx.globalAlpha = 0.25 + (i % 3) * 0.1;
+        ctx.fillStyle = i % 2 ? "#ff9a4a" : "#e0b84a";
+        ctx.fillRect(x, y, 2, 2);
+      }
+      ctx.globalAlpha = 1;
+      // névoa inferior
+      const fog = ctx.createLinearGradient(0, H * 0.7, 0, H);
+      fog.addColorStop(0, "rgba(20,10,30,0)");
+      fog.addColorStop(1, "rgba(20,10,30,0.45)");
+      ctx.fillStyle = fog;
+      ctx.fillRect(0, H * 0.7, W, H * 0.3);
+      // destroços flutuando
+      ctx.fillStyle = "#3a3048";
+      for (const d of this.debris) {
+        const y = (d.y + scroll * 0.5) % (H + 80) - 40;
+        ctx.globalAlpha = 0.55;
+        ctx.fillRect(d.x, y, 10 + d.i * 3, 4);
+      }
+      ctx.globalAlpha = 1;
     }
   }
 
