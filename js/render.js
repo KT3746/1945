@@ -79,6 +79,13 @@ export class Renderer {
       ctx.fillStyle = `rgba(200,30,20,${game.fx.hurt * 0.35})`;
       ctx.fillRect(0, 0, W, H);
     }
+    {
+      const vg = ctx.createRadialGradient(W / 2, H / 2, H * 0.35, W / 2, H / 2, H * 0.78);
+      vg.addColorStop(0, "rgba(0,0,0,0)");
+      vg.addColorStop(1, "rgba(0,0,0,0.28)");
+      ctx.fillStyle = vg;
+      ctx.fillRect(0, 0, W, H);
+    }
     if (game.player.invuln > 0 && game.mode === "playing") {
       ctx.strokeStyle = "rgba(255,255,255,0.35)";
       ctx.beginPath();
@@ -233,27 +240,38 @@ export class Renderer {
   }
 
   _bullets(ctx, game) {
-    ctx.fillStyle = "#fff4b0";
     for (const b of game.pBullets) {
+      const glow = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, 8);
+      glow.addColorStop(0, "rgba(255,250,200,0.9)");
+      glow.addColorStop(0.5, "rgba(255,200,80,0.35)");
+      glow.addColorStop(1, "rgba(255,160,40,0)");
+      ctx.fillStyle = glow;
       ctx.beginPath();
-      ctx.ellipse(b.x, b.y, 2.2, 5, 0, 0, Math.PI * 2);
+      ctx.arc(b.x, b.y, 7, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#fff8d0";
+      ctx.beginPath();
+      ctx.ellipse(b.x, b.y, 2.4, 6, 0, 0, Math.PI * 2);
       ctx.fill();
       ctx.fillStyle = "#ffe08a";
-      ctx.fillRect(b.x - 1, b.y, 2, 6);
-      ctx.fillStyle = "#fff4b0";
+      ctx.fillRect(b.x - 1.1, b.y - 1, 2.2, 8);
     }
     for (const b of game.eBullets) {
       ctx.fillStyle = "#1a0610";
       ctx.beginPath();
-      ctx.arc(b.x, b.y, b.r + 1.6, 0, Math.PI * 2);
+      ctx.arc(b.x, b.y, b.r + 2, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillStyle = "#ff2a78";
+      const eg = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, b.r + 2);
+      eg.addColorStop(0, "#ffd060");
+      eg.addColorStop(0.55, "#ff2a78");
+      eg.addColorStop(1, "#6a0020");
+      ctx.fillStyle = eg;
       ctx.beginPath();
-      ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
+      ctx.arc(b.x, b.y, b.r + 0.5, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillStyle = "#ffb020";
+      ctx.fillStyle = "#fff0c0";
       ctx.beginPath();
-      ctx.arc(b.x, b.y, Math.max(2.2, b.r * 0.42), 0, Math.PI * 2);
+      ctx.arc(b.x, b.y, Math.max(1.8, b.r * 0.38), 0, Math.PI * 2);
       ctx.fill();
     }
   }
