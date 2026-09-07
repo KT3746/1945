@@ -539,20 +539,23 @@ button.linkish {
   .touch-actions {
     pointer-events: auto;
     margin-left: auto;
-    gap: 10px;
+    gap: 34px;
+    align-items: flex-end;
+    padding-bottom: 4px;
   }
-  /* botões menores no canto — menos overlap com a área de jogo */
+  /* Fogo +30%; Bomba mais acima (gap maior) */
   #btn-fire {
-    width: 68px;
-    height: 68px;
+    width: 88px;
+    height: 88px;
     box-shadow: 0 3px 0 #8a4a10;
-    opacity: 0.9;
+    opacity: 0.92;
   }
   #btn-bomb {
     width: 56px;
     height: 34px;
     font: 800 11px/1 Barlow, sans-serif;
-    opacity: 0.9;
+    opacity: 0.92;
+    margin-bottom: 8px;
   }
   .desk-hint {
     display: none;
@@ -579,8 +582,8 @@ button.linkish {
     height: 96px;
   }
   #btn-fire {
-    width: 64px;
-    height: 64px;
+    width: 84px;
+    height: 84px;
   }
 }
 
