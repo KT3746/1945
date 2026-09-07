@@ -397,15 +397,17 @@ export class AudioSys {
   }
 
   enemyShot() {
-    this.tone(300, "sawtooth", 0.07, 0.048, -110);
-    this.noise(0.035, 0.028, 2000);
+    this.tone(280, "sawtooth", 0.055, 0.042, -90);
+    this.tone(420, "triangle", 0.04, 0.025, -160);
+    this.noise(0.03, 0.022, 2400);
   }
 
   explosion() {
-    this.noise(0.3, 0.24, 1200);
-    this.noise(0.2, 0.14, 3200);
-    this.tone(72, "sine", 0.32, 0.16, -28);
-    this.tone(150, "sawtooth", 0.18, 0.08, -70);
+    this.noise(0.28, 0.22, 1100);
+    this.noise(0.16, 0.12, 3600);
+    this.tone(68, "sine", 0.3, 0.15, -24);
+    this.tone(140, "sawtooth", 0.16, 0.07, -60);
+    this.tone(220, "triangle", 0.1, 0.04, -80);
   }
 
   bigBoom() {
@@ -428,9 +430,11 @@ export class AudioSys {
   }
 
   pickup() {
-    this.tone(659, "sine", 0.06, 0.1);
-    setTimeout(() => this.tone(880, "triangle", 0.08, 0.09), 40);
-    setTimeout(() => this.tone(1174, "sine", 0.14, 0.08), 90);
+    this.tone(659, "sine", 0.05, 0.1);
+    this.tone(988, "triangle", 0.04, 0.05);
+    setTimeout(() => this.tone(880, "triangle", 0.07, 0.09), 35);
+    setTimeout(() => this.tone(1174, "sine", 0.12, 0.085), 80);
+    setTimeout(() => this.tone(1480, "sine", 0.1, 0.05), 130);
   }
 
   ui() {
