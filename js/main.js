@@ -108,5 +108,5 @@ window.addEventListener(
 
 requestAnimationFrame(frame);
 
-document.title = `Céu de Aço`;
+document.title = `1945`;
 void VERSION;
