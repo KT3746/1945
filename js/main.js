@@ -108,5 +108,5 @@ window.addEventListener(
 
 requestAnimationFrame(frame);
 
-document.title = `1945`;
+document.title = `1945 · v${VERSION}`;
 void VERSION;
