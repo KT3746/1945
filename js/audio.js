@@ -272,9 +272,98 @@ export class AudioSys {
   }
 
   shoot() {
-    this.tone(980, "square", 0.04, 0.05, -580);
-    this.tone(1600, "triangle", 0.028, 0.028, -900);
-    this.noise(0.022, 0.04, 5200);
+    if (!this.unlocked || this.muted) return;
+    const ctx = this.ctx;
+    const t = ctx.currentTime;
+    const dest = this.sfxGain;
+
+    // Transient mecânico (click) — bandpass curto
+    {
+      const n = Math.max(1, (ctx.sampleRate * 0.018) | 0);
+      const buf = ctx.createBuffer(1, n, ctx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < n; i++) data[i] = (Math.random() * 2 - 1) * (1 - i / n);
+      const src = ctx.createBufferSource();
+      src.buffer = buf;
+      const bp = ctx.createBiquadFilter();
+      bp.type = "bandpass";
+      bp.frequency.value = 4200;
+      bp.Q.value = 1.4;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.11, t + 0.0015);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.022);
+      src.connect(bp);
+      bp.connect(g);
+      g.connect(dest);
+      src.start(t);
+    }
+
+    // Corpo do blaster — saw + triangle com pitch drop
+    {
+      const o = ctx.createOscillator();
+      const o2 = ctx.createOscillator();
+      const f = ctx.createBiquadFilter();
+      const g = ctx.createGain();
+      o.type = "sawtooth";
+      o2.type = "triangle";
+      o.frequency.setValueAtTime(1180, t);
+      o.frequency.exponentialRampToValueAtTime(220, t + 0.055);
+      o2.frequency.setValueAtTime(2360, t);
+      o2.frequency.exponentialRampToValueAtTime(440, t + 0.05);
+      f.type = "lowpass";
+      f.frequency.setValueAtTime(5200, t);
+      f.frequency.exponentialRampToValueAtTime(900, t + 0.06);
+      f.Q.value = 0.7;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.078, t + 0.003);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.07);
+      o.connect(f);
+      o2.connect(f);
+      f.connect(g);
+      g.connect(dest);
+      o.start(t);
+      o2.start(t);
+      o.stop(t + 0.09);
+      o2.stop(t + 0.09);
+    }
+
+    // Whoosh de ar (highpass curto)
+    {
+      const n = Math.max(1, (ctx.sampleRate * 0.035) | 0);
+      const buf = ctx.createBuffer(1, n, ctx.sampleRate);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < n; i++) data[i] = Math.random() * 2 - 1;
+      const src = ctx.createBufferSource();
+      src.buffer = buf;
+      const hp = ctx.createBiquadFilter();
+      hp.type = "highpass";
+      hp.frequency.value = 2800;
+      const g = ctx.createGain();
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.045, t + 0.002);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.04);
+      src.connect(hp);
+      hp.connect(g);
+      g.connect(dest);
+      src.start(t);
+    }
+
+    // Peso baixo (sub tick)
+    {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = "sine";
+      o.frequency.setValueAtTime(180, t);
+      o.frequency.exponentialRampToValueAtTime(70, t + 0.04);
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.055, t + 0.002);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.045);
+      o.connect(g);
+      g.connect(dest);
+      o.start(t);
+      o.stop(t + 0.06);
+    }
   }
 
   enemyShot() {
