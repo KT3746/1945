@@ -28,54 +28,75 @@ export function bakeSprites() {
   const s = {};
 
   s.player = canvas(32, 40, (g) => {
-    g.fillStyle = "#3d4a22";
+    // sombra
+    g.fillStyle = "#00000044";
     g.beginPath();
-    g.moveTo(16, 2);
-    g.lineTo(20, 14);
-    g.lineTo(19, 32);
-    g.lineTo(16, 38);
-    g.lineTo(13, 32);
-    g.lineTo(12, 14);
+    g.ellipse(16, 38, 8, 2.5, 0, 0, Math.PI * 2);
+    g.fill();
+    // fuselagem escura
+    g.fillStyle = "#2a3418";
+    g.beginPath();
+    g.moveTo(16, 1);
+    g.lineTo(21, 13);
+    g.lineTo(20, 31);
+    g.lineTo(16, 39);
+    g.lineTo(12, 31);
+    g.lineTo(11, 13);
     g.closePath();
     g.fill();
-    g.fillStyle = "#7a8c3a";
+    // painel claro
+    const body = g.createLinearGradient(16, 2, 16, 34);
+    body.addColorStop(0, "#9aaa4a");
+    body.addColorStop(0.5, "#6a7c32");
+    body.addColorStop(1, "#3a4a20");
+    g.fillStyle = body;
     g.beginPath();
-    g.moveTo(16, 4);
-    g.lineTo(19, 14);
-    g.lineTo(18, 30);
-    g.lineTo(16, 34);
-    g.lineTo(14, 30);
-    g.lineTo(13, 14);
+    g.moveTo(16, 3);
+    g.lineTo(19.5, 13);
+    g.lineTo(18.5, 30);
+    g.lineTo(16, 35);
+    g.lineTo(13.5, 30);
+    g.lineTo(12.5, 13);
     g.closePath();
     g.fill();
+    // asas
     g.fillStyle = "#4a5c28";
-    g.fillRect(4, 16, 24, 6);
+    g.fillRect(3, 15, 26, 7);
     g.fillStyle = "#d4c24a";
-    g.fillRect(4, 16, 4, 6);
-    g.fillRect(24, 16, 4, 6);
+    g.fillRect(3, 15, 5, 7);
+    g.fillRect(24, 15, 5, 7);
+    g.fillStyle = "#1a2010";
+    g.fillRect(8, 17, 16, 1);
+    // estrela / marca
     g.fillStyle = "#b33a2a";
-    g.fillRect(14, 22, 4, 5);
-    g.fillStyle = "#7ec8e3";
+    g.fillRect(14, 21, 4, 5);
+    g.fillStyle = "#ffe08a";
+    g.fillRect(15, 22, 2, 3);
+    // cockpit
+    const ck = g.createRadialGradient(16, 11, 0, 16, 11, 5);
+    ck.addColorStop(0, "#d8f0ff");
+    ck.addColorStop(0.6, "#5aa8d0");
+    ck.addColorStop(1, "#2a6080");
+    g.fillStyle = ck;
     g.beginPath();
-    g.ellipse(16, 12, 3, 4, 0, 0, Math.PI * 2);
+    g.ellipse(16, 11, 3.2, 4.2, 0, 0, Math.PI * 2);
     g.fill();
-    g.fillStyle = "#e8e0c8";
-    g.fillRect(15, 1, 2, 5);
-    g.fillStyle = "#2a2010";
+    // nariz
+    g.fillStyle = "#f0e8d0";
+    g.fillRect(15, 0, 2, 5);
+    // escapamento
+    g.fillStyle = "#1a1408";
     g.fillRect(13, 34, 6, 3);
-    // motor glow
-    const eg = g.createRadialGradient(16, 37, 0, 16, 38, 8);
-    eg.addColorStop(0, "rgba(120,220,255,0.85)");
-    eg.addColorStop(0.5, "rgba(80,160,255,0.35)");
+    const eg = g.createRadialGradient(16, 37, 0, 16, 38, 9);
+    eg.addColorStop(0, "rgba(180,240,255,0.95)");
+    eg.addColorStop(0.4, "rgba(80,170,255,0.45)");
     eg.addColorStop(1, "rgba(40,100,255,0)");
     g.fillStyle = eg;
     g.beginPath();
-    g.arc(16, 38, 8, 0, Math.PI * 2);
+    g.arc(16, 38, 9, 0, Math.PI * 2);
     g.fill();
-    g.fillStyle = "#ffe08a";
-    g.globalAlpha = 0.7;
-    g.fillRect(15, 36, 2, 3);
-    g.globalAlpha = 1;
+    g.fillStyle = "#fff0a0";
+    g.fillRect(15, 35, 2, 4);
   });
 
   s.vespa = canvas(24, 24, (g) => {
