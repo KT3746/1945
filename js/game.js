@@ -1,5 +1,5 @@
 /**
- * Simulação do Céu de Aço: jogador, ondas, chefes, tiros, bônus e colisões.
+ * Simulação do 1945: jogador, ondas, chefes, tiros, bônus e colisões.
  */
 import {
   W,
