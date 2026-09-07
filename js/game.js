@@ -643,10 +643,11 @@ export class Game {
         if (e.dead) continue;
         if (circleHit(b.x, b.y, b.r, e.x, e.y, e.r)) {
           e.hp -= b.dmg;
-          e.flash = 0.1;
+          e.flash = 0.12;
           hit = true;
-          if (e.boss) this.hitStop = Math.max(this.hitStop, 0.045);
-          else if (e.hp <= 0) this.hitStop = Math.max(this.hitStop, 0.03);
+          this.fx.impact(b.x, b.y);
+          if (e.boss) this.hitStop = Math.max(this.hitStop, 0.05);
+          else if (e.hp <= 0) this.hitStop = Math.max(this.hitStop, 0.035);
           if (e.hp <= 0) this._kill(e, false);
           break;
         }
