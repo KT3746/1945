@@ -66,7 +66,13 @@ export class Renderer {
     ctx.restore();
 
     if (game.fx.flash > 0) {
-      ctx.fillStyle = `rgba(255,240,200,${game.fx.flash * 0.45})`;
+      const a = game.fx.flash;
+      ctx.fillStyle = `rgba(255,240,200,${a * 0.38})`;
+      ctx.fillRect(0, 0, W, H);
+      const g = ctx.createRadialGradient(W/2, H/2, H*0.15, W/2, H/2, H*0.72);
+      g.addColorStop(0, "rgba(255,200,120,0)");
+      g.addColorStop(1, `rgba(255,160,40,${a * 0.22})`);
+      ctx.fillStyle = g;
       ctx.fillRect(0, 0, W, H);
     }
     if (game.fx.hurt > 0) {
@@ -288,11 +294,18 @@ export class Renderer {
 
   _combo(ctx, game) {
     if (game.combo < 2) return;
-    ctx.fillStyle = "#ffe08a";
-    ctx.font = "700 14px Oswald, sans-serif";
+    const label = `COMBO x${game.combo}`;
+    ctx.save();
     ctx.textAlign = "right";
-    ctx.fillText(`COMBO x${game.combo}`, W - 12, 36);
-    ctx.textAlign = "left";
+    ctx.font = "800 15px Oswald, sans-serif";
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = "#00000099";
+    ctx.fillStyle = "#ffe08a";
+    ctx.shadowColor = "#e0b84a88";
+    ctx.shadowBlur = 12;
+    ctx.strokeText(label, W - 12, 36);
+    ctx.fillText(label, W - 12, 36);
+    ctx.restore();
   }
 
   _status(ctx, game) {
