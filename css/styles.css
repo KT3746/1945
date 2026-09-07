@@ -32,8 +32,9 @@ body {
 body {
   min-height: 100dvh;
   background:
-    radial-gradient(ellipse at 50% -10%, #1a4a6a 0%, transparent 50%),
-    linear-gradient(180deg, #07141f 0%, #0a2230 50%, #071018 100%);
+    radial-gradient(ellipse at 50% -5%, #3a70a8 0%, transparent 42%),
+    radial-gradient(ellipse at 80% 110%, #4a281033 0%, transparent 55%),
+    linear-gradient(180deg, #05101a 0%, #0a2230 45%, #060d14 100%);
 }
 
 #app {
@@ -80,10 +81,12 @@ body {
 .brand h1 {
   font-family: Oswald, Barlow, sans-serif;
   font-size: 18px;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
   margin: 0;
   line-height: 1;
+  color: #ffe7b3;
+  text-shadow: 0 0 14px #e0b84a33;
 }
 
 .tag {
@@ -113,6 +116,7 @@ body {
   font-size: 16px;
   letter-spacing: 0.04em;
   color: var(--brass);
+  text-shadow: 0 0 12px #e0b84a44;
 }
 
 .toolbar {
@@ -153,7 +157,8 @@ body {
   border-radius: 16px;
   overflow: hidden;
   box-shadow:
-    0 0 0 2px #e0b84a33,
+    0 0 0 2px #e0b84a55,
+    0 0 28px #e0b84a22,
     var(--shadow);
   background: #0a3048;
 }
@@ -318,12 +323,21 @@ body {
 
 .modal {
   width: min(440px, 100%);
-  background: var(--panel);
-  border: 2px solid var(--line);
-  border-radius: 18px;
-  padding: 22px 20px 18px;
-  box-shadow: var(--shadow);
-  backdrop-filter: blur(10px);
+  background:
+    linear-gradient(165deg, #143048ee 0%, #0c1c28f2 42%, #0a1620f5 100%);
+  border: 2px solid #e0b84a55;
+  border-radius: 20px;
+  padding: 24px 22px 20px;
+  box-shadow:
+    0 0 0 1px #ffffff0a inset,
+    0 18px 50px #000000aa,
+    0 0 40px #e0b84a18;
+  backdrop-filter: blur(14px);
+  animation: modalIn 0.32s ease-out;
+}
+@keyframes modalIn {
+  from { opacity: 0; transform: translateY(10px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
 .eyebrow {
@@ -337,12 +351,14 @@ body {
 
 .modal h2 {
   font-family: Oswald, sans-serif;
-  font-size: clamp(32px, 9vw, 48px);
-  letter-spacing: 0.04em;
+  font-size: clamp(34px, 9vw, 52px);
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  margin: 4px 0 6px;
+  margin: 4px 0 8px;
   color: #ffe7b3;
-  text-shadow: 0 3px 0 #3a2414;
+  text-shadow:
+    0 3px 0 #3a2414,
+    0 0 24px #e0b84a55;
 }
 
 .tagline,
@@ -380,10 +396,18 @@ button.linkish {
 
 button.cta {
   border-radius: 12px;
-  padding: 14px 18px;
+  padding: 14px 20px;
   color: #2a1c10;
-  background: linear-gradient(#ffe08a, #e0a84a);
-  box-shadow: 0 3px 0 #8a5a1a;
+  background: linear-gradient(180deg, #fff0b0 0%, #ffe08a 35%, #e0a84a 100%);
+  box-shadow:
+    0 3px 0 #8a5a1a,
+    0 8px 20px #e0b84a33,
+    0 1px 0 #fff8  inset;
+  letter-spacing: 0.04em;
+  transition: filter 0.15s ease, transform 0.1s ease;
+}
+button.cta:hover {
+  filter: brightness(1.06);
 }
 
 button.cta:active {
