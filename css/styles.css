@@ -502,10 +502,11 @@ button.linkish {
     bottom: 0;
     z-index: 5;
     margin: 0;
-    padding: 0 12px calc(16px + env(safe-area-inset-bottom));
-    background: linear-gradient(0deg, rgba(7, 20, 31, 0.5), transparent 70%);
+    padding: 0 8px calc(8px + env(safe-area-inset-bottom));
+    background: linear-gradient(0deg, rgba(7, 20, 31, 0.28), transparent 50%);
     pointer-events: none;
     min-height: 0;
+    align-items: flex-end;
   }
   .stick {
     display: none !important;
@@ -513,10 +514,20 @@ button.linkish {
   .touch-actions {
     pointer-events: auto;
     margin-left: auto;
+    gap: 10px;
   }
-  /* finger-follow: stick opcional */
-  .touch-actions {
-    gap: 24px;
+  /* botões menores no canto — menos overlap com a área de jogo */
+  #btn-fire {
+    width: 68px;
+    height: 68px;
+    box-shadow: 0 3px 0 #8a4a10;
+    opacity: 0.9;
+  }
+  #btn-bomb {
+    width: 56px;
+    height: 34px;
+    font: 800 11px/1 Barlow, sans-serif;
+    opacity: 0.9;
   }
   .desk-hint {
     display: none;
@@ -543,8 +554,8 @@ button.linkish {
     height: 96px;
   }
   #btn-fire {
-    width: 76px;
-    height: 76px;
+    width: 64px;
+    height: 64px;
   }
 }
 

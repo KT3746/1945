@@ -122,7 +122,10 @@ export class Game {
 
   spawnPlayer() {
     this.player.x = W / 2;
-    this.player.y = H - 78;
+    const touchSpawn =
+      typeof matchMedia !== "undefined" &&
+      matchMedia("(max-width: 720px), (pointer: coarse)").matches;
+    this.player.y = touchSpawn ? H - 120 : H - 78;
     this.player.invuln = INVULN_TIME;
     this.player.alive = true;
     this.player.fireCd = 0.2;
@@ -166,16 +169,22 @@ export class Game {
     if (p.alive) {
       p.focus = !!input.focusHeld;
       const spd = moveSpeed(p.focus);
+      // no celular os botões Fogo/Bomba ficam na base — zona segura acima deles
+      const touchUI =
+        !!input.touchEnabled ||
+        (typeof matchMedia !== "undefined" &&
+          matchMedia("(max-width: 720px), (pointer: coarse)").matches);
+      const yMax = touchUI ? H - 110 : H - 28;
       if (input.aimActive) {
         // arraste relativo amplificado — responde na hora
         p.x = clamp(p.x + (input.aimDX || 0), 16, W - 16);
-        p.y = clamp(p.y + (input.aimDY || 0), 40, H - 28);
+        p.y = clamp(p.y + (input.aimDY || 0), 40, yMax);
         input.aimDX = 0;
         input.aimDY = 0;
         input.aimFresh = false;
       } else {
         p.x = clamp(p.x + input.moveX * spd * dt, 16, W - 16);
-        p.y = clamp(p.y + input.moveY * spd * dt, 40, H - 28);
+        p.y = clamp(p.y + input.moveY * spd * dt, 40, yMax);
       }
       p.invuln = Math.max(0, p.invuln - dt);
       p.rapidT = Math.max(0, p.rapidT - dt);
