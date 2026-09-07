@@ -17,6 +17,8 @@ export class AudioSys {
     this._step = 0;
     this._intense = 0;
     this._bassStep = 0;
+    this._stageId = 0;
+    this._palette = "tropic";
   }
 
   unlock() {
@@ -69,10 +71,38 @@ export class AudioSys {
     this._intense = v;
     if (this._pad && this._pad.f && this.ctx) {
       const t = this.ctx.currentTime;
-      this._pad.f.frequency.setTargetAtTime(v ? 2600 : 1100, t, 0.4);
-      this._pad.drive.gain.setTargetAtTime(v ? 0.11 : 0.06, t, 0.4);
-      this._pad.sparkleG.gain.setTargetAtTime(v ? 0.03 : 0.014, t, 0.4);
+      const base = this._paletteFilter();
+      this._pad.f.frequency.setTargetAtTime(v ? Math.max(base, 2600) : base, t, 0.4);
+      this._pad.drive.gain.setTargetAtTime(v ? 0.12 : 0.06, t, 0.4);
+      this._pad.sparkleG.gain.setTargetAtTime(v ? 0.034 : 0.014, t, 0.4);
     }
+  }
+
+  _paletteFilter() {
+    const p = this._palette;
+    if (p === "storm") return 1600;
+    if (p === "fortress") return 900;
+    if (p === "bronze") return 1250;
+    if (p === "cloud") return 1400;
+    return 1100;
+  }
+
+  setStage(index, palette) {
+    this._stageId = index | 0;
+    this._palette = palette || "tropic";
+    if (!this._pad || !this.ctx) return;
+    const t = this.ctx.currentTime;
+    const bass = 48 + this._stageId * 4;
+    const mid = 98 + this._stageId * 8;
+    try {
+      this._pad.bass.frequency.setTargetAtTime(bass, t, 0.5);
+      this._pad.sub.frequency.setTargetAtTime(bass * 0.5, t, 0.5);
+      this._pad.mid.frequency.setTargetAtTime(mid, t, 0.5);
+      this._pad.mid2.frequency.setTargetAtTime(mid * 1.5, t, 0.5);
+      if (!this._intense) {
+        this._pad.f.frequency.setTargetAtTime(this._paletteFilter(), t, 0.6);
+      }
+    } catch (_) {}
   }
 
   update(dt) {
@@ -409,15 +439,19 @@ export class AudioSys {
   }
 
   warning() {
-    this.tone(466, "square", 0.1, 0.085);
-    setTimeout(() => this.tone(370, "square", 0.14, 0.075), 95);
+    this.tone(520, "sawtooth", 0.09, 0.09, -40);
+    this.noise(0.08, 0.05, 2400);
+    setTimeout(() => this.tone(390, "square", 0.14, 0.08, -30), 90);
+    setTimeout(() => this.tone(310, "sawtooth", 0.16, 0.07), 180);
   }
 
   stage() {
-    this.tone(311, "triangle", 0.11, 0.1);
-    setTimeout(() => this.tone(392, "triangle", 0.11, 0.1), 80);
-    setTimeout(() => this.tone(466, "triangle", 0.16, 0.11), 160);
-    setTimeout(() => this.tone(622, "sine", 0.22, 0.09), 250);
+    const root = 280 + (this._stageId % 5) * 28;
+    this.tone(root, "triangle", 0.12, 0.1);
+    setTimeout(() => this.tone(root * 1.25, "triangle", 0.12, 0.095), 75);
+    setTimeout(() => this.tone(root * 1.5, "sine", 0.18, 0.1), 150);
+    setTimeout(() => this.tone(root * 2, "sine", 0.28, 0.08), 240);
+    this.noise(0.06, 0.03, 1800);
   }
 
   gameover() {
