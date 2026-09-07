@@ -194,18 +194,28 @@ export class Renderer {
       const spr = this.sprites[e.kind] || this.sprites.vespa;
       if (e.flash > 0) ctx.filter = "brightness(2.4)";
       if (e.telegraph > 0) {
+        const pulse = 0.45 + Math.sin(this.time * 18) * 0.2;
         ctx.save();
-        ctx.globalAlpha = 0.55;
-        ctx.strokeStyle = "#ffe08a";
-        ctx.lineWidth = 2;
-        ctx.setLineDash([4, 4]);
+        ctx.globalAlpha = pulse;
+        ctx.strokeStyle = "#ff9a4a";
+        ctx.lineWidth = 2.5;
+        ctx.setLineDash([5, 4]);
+        const ring = e.r + 12 + (0.72 - e.telegraph) * 28;
         ctx.beginPath();
-        ctx.arc(e.x, e.y, e.r + 10 + (0.55 - e.telegraph) * 20, 0, Math.PI * 2);
+        ctx.arc(e.x, e.y, ring, 0, Math.PI * 2);
         ctx.stroke();
         ctx.setLineDash([]);
-        if (e.attack === "aimed" || e.attack === "sweep") {
+        ctx.globalAlpha = 0.35;
+        ctx.fillStyle = "#ff6a4a";
+        ctx.beginPath();
+        ctx.arc(e.x, e.y, e.r + 6, 0, Math.PI * 2);
+        ctx.fill();
+        if (e.attack === "aimed" || e.attack === "sweep" || e.attack === "spread") {
+          ctx.globalAlpha = 0.55;
+          ctx.strokeStyle = "#ffe08a";
+          ctx.lineWidth = 2;
           ctx.beginPath();
-          ctx.moveTo(e.x, e.y);
+          ctx.moveTo(e.x, e.y + e.r);
           ctx.lineTo(game.player.x, game.player.y);
           ctx.stroke();
         }
@@ -268,27 +278,37 @@ export class Renderer {
 
   _banner(ctx, game) {
     if (game.bannerT <= 0) return;
-    const fade = game.bannerT > 0.4 ? 1 : Math.max(0, game.bannerT / 0.4);
-    const x = 12;
-    const y = 26;
-    const w = W - 24;
-    const h = 58;
+    const fade = game.bannerT > 0.45 ? 1 : Math.max(0, game.bannerT / 0.45);
+    const boss = game.bannerKind === "boss";
+    const x = 10;
+    const y = 22;
+    const w = W - 20;
+    const h = boss ? 66 : 58;
     ctx.save();
     ctx.globalAlpha = fade;
-    ctx.fillStyle = "#061018";
+    const g = ctx.createLinearGradient(x, y, x, y + h);
+    if (boss) {
+      g.addColorStop(0, "#2a1010ee");
+      g.addColorStop(1, "#140808f2");
+    } else {
+      g.addColorStop(0, "#0c2230ee");
+      g.addColorStop(1, "#061018f2");
+    }
+    ctx.fillStyle = g;
     ctx.fillRect(x, y, w, h);
-    ctx.fillStyle = "#0c2230";
-    ctx.fillRect(x + 3, y + 3, w - 6, h - 6);
-    ctx.strokeStyle = "#e0b84a";
-    ctx.lineWidth = 2;
+    ctx.strokeStyle = boss ? "#ff6a4a" : "#e0b84a";
+    ctx.lineWidth = 2.5;
+    ctx.shadowColor = boss ? "#ff6a4a88" : "#e0b84a66";
+    ctx.shadowBlur = 14;
     ctx.strokeRect(x + 1.5, y + 1.5, w - 3, h - 3);
-    ctx.fillStyle = "#ffe7b3";
-    ctx.font = "700 18px Oswald, sans-serif";
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = boss ? "#ffb0a0" : "#ffe7b3";
+    ctx.font = "800 19px Oswald, sans-serif";
     ctx.textAlign = "center";
-    ctx.fillText(game.banner, W / 2, y + 26);
+    ctx.fillText(game.banner, W / 2, y + (boss ? 28 : 26));
     ctx.fillStyle = "#f4f7fa";
     ctx.font = "700 12px Barlow, sans-serif";
-    ctx.fillText(game.bannerSub || "", W / 2, y + 46);
+    ctx.fillText(game.bannerSub || "", W / 2, y + (boss ? 50 : 46));
     ctx.restore();
   }
 
