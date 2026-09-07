@@ -1,4 +1,4 @@
-/** Partículas, rastros, flashes e textos de combo. */
+/** Particulas, rastros, flashes e textos de combo — premium. */
 
 export class FX {
   constructor() {
@@ -22,54 +22,73 @@ export class FX {
   }
 
   boom(x, y, n = 18, color = "#e8c070") {
-    this._cap(50);
-    n = Math.min(n, 18);
+    this._cap(70);
+    n = Math.min(n, 22);
+    this.bits.push({
+      x, y, vx: 0, vy: 0,
+      life: 0.18, max: 0.18, r: 10 + Math.random() * 6,
+      color: "#fff6c8", kind: "glow",
+    });
     for (let i = 0; i < n; i++) {
       const a = Math.random() * Math.PI * 2;
-      const sp = 40 + Math.random() * 180;
+      const sp = 50 + Math.random() * 220;
       this.bits.push({
-        x,
-        y,
+        x, y,
         vx: Math.cos(a) * sp,
         vy: Math.sin(a) * sp,
-        life: 0.35 + Math.random() * 0.4,
-        max: 0.55,
-        r: 1.5 + Math.random() * 3,
-        color: i % 3 === 0 ? "#fff4d0" : color,
-        kind: "spark",
+        life: 0.35 + Math.random() * 0.45,
+        max: 0.6,
+        r: 1.2 + Math.random() * 3.2,
+        color: i % 4 === 0 ? "#fff4d0" : i % 3 === 0 ? "#ff9a4a" : color,
+        kind: i % 5 === 0 ? "streak" : "spark",
       });
     }
-    this.shake = Math.min(10, this.shake + 3.2);
-    this.flash = 0.12;
+    for (let i = 0; i < 4; i++) {
+      this.bits.push({
+        x: x + (Math.random() - 0.5) * 8,
+        y: y + (Math.random() - 0.5) * 8,
+        vx: (Math.random() - 0.5) * 30,
+        vy: -20 - Math.random() * 40,
+        life: 0.45 + Math.random() * 0.25,
+        max: 0.6,
+        r: 3 + Math.random() * 5,
+        color: "#c9d4e088",
+        kind: "puff",
+      });
+    }
+    this.shake = Math.min(12, this.shake + 3.8);
+    this.flash = 0.16;
   }
 
   trail(x, y, color = "#9ad4ff") {
-    this._cap(60);
+    this._cap(80);
     this.bits.push({
-      x,
-      y,
-      vx: (Math.random() - 0.5) * 12,
-      vy: 40 + Math.random() * 30,
-      life: 0.22,
-      max: 0.22,
-      r: 1.6,
-      color,
-      kind: "trail",
+      x, y,
+      vx: (Math.random() - 0.5) * 14,
+      vy: 35 + Math.random() * 40,
+      life: 0.28, max: 0.28, r: 1.8 + Math.random(),
+      color, kind: "spark",
     });
+    if (Math.random() < 0.35) {
+      this.bits.push({
+        x, y: y + 4,
+        vx: (Math.random() - 0.5) * 8,
+        vy: 20,
+        life: 0.18, max: 0.18, r: 3,
+        color: "#ffe08a55", kind: "glow",
+      });
+    }
   }
 
   puff(x, y, color = "#c9d4e0") {
     this._cap(60);
     this.bits.push({
-      x,
-      y,
+      x, y,
       vx: (Math.random() - 0.5) * 20,
       vy: -10,
-      life: 0.4,
-      max: 0.4,
+      life: 0.4, max: 0.4,
       r: 4 + Math.random() * 4,
-      color,
-      kind: "puff",
+      color, kind: "puff",
     });
   }
 
@@ -91,7 +110,8 @@ export class FX {
       p.life -= dt;
       p.x += p.vx * dt;
       p.y += p.vy * dt;
-      p.vy += 40 * dt;
+      if (p.kind !== "glow") p.vy += 40 * dt;
+      else p.r *= 1 + dt * 2.2;
       if (p.life <= 0) this.bits.splice(i, 1);
     }
     for (let i = this.texts.length - 1; i >= 0; i--) {
@@ -107,20 +127,41 @@ export class FX {
       const a = Math.max(0, p.life / p.max);
       ctx.globalAlpha = a;
       ctx.fillStyle = p.color;
-      if (p.kind === "puff") {
+      if (p.kind === "glow") {
+        const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.r * (0.6 + a));
+        g.addColorStop(0, "rgba(255,246,200,0.9)");
+        g.addColorStop(0.45, "rgba(255,160,60,0.35)");
+        g.addColorStop(1, "rgba(255,120,40,0)");
+        ctx.fillStyle = g;
         ctx.beginPath();
-        ctx.arc(p.x, p.y, p.r * (1.4 - a * 0.4), 0, Math.PI * 2);
+        ctx.arc(p.x, p.y, p.r * (0.7 + a * 0.5), 0, Math.PI * 2);
         ctx.fill();
+      } else if (p.kind === "puff") {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r * (1.5 - a * 0.5), 0, Math.PI * 2);
+        ctx.fill();
+      } else if (p.kind === "streak") {
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(Math.atan2(p.vy, p.vx));
+        ctx.fillRect(-p.r * 2.2, -p.r * 0.4, p.r * 4.4, p.r * 0.8);
+        ctx.restore();
       } else {
-        ctx.fillRect(p.x - p.r, p.y - p.r, p.r * 2, p.r * 2);
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fill();
       }
     }
     ctx.globalAlpha = 1;
-    ctx.font = "700 12px Barlow, sans-serif";
+    ctx.font = "800 13px Oswald, Barlow, sans-serif";
     ctx.textAlign = "center";
+    ctx.lineWidth = 3;
     for (const t of this.texts) {
-      ctx.globalAlpha = Math.max(0, t.life / t.max);
+      const a = Math.max(0, t.life / t.max);
+      ctx.globalAlpha = a;
+      ctx.strokeStyle = "#00000088";
       ctx.fillStyle = t.color;
+      ctx.strokeText(t.text, t.x, t.y);
       ctx.fillText(t.text, t.x, t.y);
     }
     ctx.globalAlpha = 1;
