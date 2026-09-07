@@ -396,8 +396,20 @@ export class Renderer {
     if (!p.alive) return;
     const blink = p.invuln > 0 && ((p.invuln * 12) | 0) % 2 === 0;
     if (blink && p.invuln > 0.2) ctx.globalAlpha = 0.4;
+    // afterburner
+    const flame = 6 + Math.sin(this.time * 28) * 2.5;
+    const fg = ctx.createLinearGradient(p.x, p.y + 14, p.x, p.y + 14 + flame + 8);
+    fg.addColorStop(0, "rgba(200,240,255,0.9)");
+    fg.addColorStop(0.45, "rgba(80,160,255,0.45)");
+    fg.addColorStop(1, "rgba(40,80,255,0)");
+    ctx.fillStyle = fg;
+    ctx.beginPath();
+    ctx.moveTo(p.x - 3, p.y + 14);
+    ctx.lineTo(p.x + 3, p.y + 14);
+    ctx.lineTo(p.x, p.y + 16 + flame);
+    ctx.fill();
     ctx.drawImage(this.sprites.player, p.x - 16, p.y - 20);
-    drawProp(ctx, p.x, p.y - 18, this.time, "rgba(240,240,220,0.5)");
+    drawProp(ctx, p.x, p.y - 18, this.time, "rgba(240,240,220,0.55)");
     if (p.shield > 0) {
       ctx.strokeStyle = "rgba(120,200,255,0.7)";
       ctx.lineWidth = 2;
@@ -506,11 +518,19 @@ export class Renderer {
 
   _pickups(ctx, game) {
     for (const u of game.pickups) {
-      const bob = Math.sin(u.t * 6) * 2;
+      const bob = Math.sin(u.t * 6) * 2.5;
       const set = this.sprites.pickup || {};
       const spr = set[u.kind] || this.sprites.bomb;
       if (spr) {
-        // sombra suave
+        const pulse = 10 + Math.sin(u.t * 8) * 2;
+        const aura = ctx.createRadialGradient(u.x, u.y + bob, 0, u.x, u.y + bob, pulse);
+        aura.addColorStop(0, "rgba(255,220,120,0.45)");
+        aura.addColorStop(0.55, "rgba(255,180,60,0.15)");
+        aura.addColorStop(1, "rgba(255,160,40,0)");
+        ctx.fillStyle = aura;
+        ctx.beginPath();
+        ctx.arc(u.x, u.y + bob, pulse, 0, Math.PI * 2);
+        ctx.fill();
         ctx.globalAlpha = 0.35;
         ctx.fillStyle = "#000";
         ctx.beginPath();
