@@ -1,8 +1,8 @@
 {
-  "name": "ceu-de-aco",
+  "name": "1945",
   "private": true,
   "type": "module",
-  "description": "Céu de Aço — shoot-em-up arcade original em português",
+  "description": "1945 — shoot-em-up arcade original em português",
   "scripts": {
     "start": "python3 -m http.server 4173",
     "test": "node --test tests/*.test.js"
