@@ -80,6 +80,24 @@ export class FX {
     }
   }
 
+  impact(x, y) {
+    this._cap(80);
+    for (let i = 0; i < 5; i++) {
+      const a = Math.random() * Math.PI * 2;
+      const sp = 40 + Math.random() * 90;
+      this.bits.push({
+        x, y,
+        vx: Math.cos(a) * sp,
+        vy: Math.sin(a) * sp,
+        life: 0.12 + Math.random() * 0.1,
+        max: 0.22,
+        r: 1.2,
+        color: i % 2 ? "#fff4d0" : "#ff9a4a",
+        kind: "spark",
+      });
+    }
+  }
+
   muzzle(x, y) {
     this._cap(80);
     this.bits.push({
