@@ -185,11 +185,11 @@ body {
 
 .boss-bar span {
   font-family: Oswald, sans-serif;
-  font-size: 12px;
-  letter-spacing: 0.12em;
+  font-size: 13px;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   color: #ffe7b3;
-  text-shadow: 0 1px 2px #000;
+  text-shadow: 0 1px 2px #000, 0 0 10px #e85d4c55;
 }
 
 .boss-bar i {
@@ -205,7 +205,8 @@ body {
   display: block;
   height: 100%;
   width: 100%;
-  background: linear-gradient(90deg, #e85d4c, #e0b84a);
+  background: linear-gradient(90deg, #ff3a2a, #e85d4c 40%, #e0b84a);
+  box-shadow: 0 0 12px #e85d4c66;
   transform-origin: left;
   transition: transform 0.12s linear;
 }
