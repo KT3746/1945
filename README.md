@@ -1,8 +1,8 @@
-# Céu de Aço
+# 1945
 
 Shoot-em-up vertical original (vista de cima), no clima dos fliperamas de avião dos anos 80. Nomes, história, arte e sons são **próprios** — nada de marcas de terceiros. Tudo em português do Brasil.
 
-**Jogar online:** [https://kt3746.github.io/ceu-de-aco/](https://kt3746.github.io/ceu-de-aco/)
+**Jogar online:** [https://kt3746.github.io/1945/](https://kt3746.github.io/1945/)
 
 > *Domine o céu. Sobreviva às ondas.*
 
@@ -85,4 +85,4 @@ npm test
 - `js/ui.js` — telas (título, pausa, vitória, fim)
 - `js/main.js` — liga o loop a 60 fps
 
-Site estático para GitHub Pages (pasta raiz, branch `main`). A constante `VERSION` em `js/version.js` é a fonte da verdade: título, rodapé e todos os `?v=` do HTML devem mostrar o mesmo número (agora **1.0.3**).
+Site estático para GitHub Pages (pasta raiz, branch `main`). A constante `VERSION` em `js/version.js` é a fonte da verdade: título, rodapé e todos os `?v=` do HTML devem mostrar o mesmo número (agora **1.2.0**).
