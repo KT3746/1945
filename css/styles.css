@@ -101,6 +101,11 @@ body {
 .stats {
   display: flex;
   gap: 10px;
+  padding: 6px 10px;
+  border-radius: 12px;
+  background: #00000033;
+  border: 1px solid #ffffff12;
+  backdrop-filter: blur(8px);
 }
 
 .stat span {
@@ -126,14 +131,18 @@ body {
 
 .chip {
   appearance: none;
-  border: 1px solid #ffffff22;
-  background: #ffffff12;
+  border: 1px solid #ffffff28;
+  background: linear-gradient(180deg, #ffffff18, #ffffff0a);
   color: var(--ink);
   border-radius: 10px;
-  padding: 8px 10px;
+  padding: 8px 11px;
   font: 700 12px/1 Barlow, sans-serif;
   cursor: pointer;
+  box-shadow: 0 1px 0 #ffffff10 inset, 0 4px 12px #00000044;
+  backdrop-filter: blur(6px);
+  transition: filter 0.12s ease, border-color 0.12s ease;
 }
+.chip:hover { filter: brightness(1.08); }
 
 .chip[aria-pressed="true"] {
   background: #e85d4c33;
@@ -157,9 +166,9 @@ body {
   border-radius: 16px;
   overflow: hidden;
   box-shadow:
-    0 0 0 2px #e0b84a55,
-    0 0 28px #e0b84a22,
-    var(--shadow);
+    0 0 0 2px #e0b84a66,
+    0 0 36px #e0b84a33,
+    0 20px 60px #000000aa;
   background: #0a3048;
 }
 
@@ -317,9 +326,15 @@ body {
   justify-content: center;
   padding: 16px;
   background:
-    radial-gradient(ellipse at 50% 110%, #3a241888, transparent 50%),
-    linear-gradient(180deg, #07141fdd, #0a1820ee);
+    radial-gradient(ellipse at 50% -20%, #e0b84a22, transparent 45%),
+    radial-gradient(ellipse at 50% 110%, #3a241899, transparent 55%),
+    linear-gradient(180deg, #07141fe8, #0a1820f2);
   z-index: 20;
+  animation: overlayIn 0.28s ease-out;
+}
+@keyframes overlayIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .modal {
@@ -362,6 +377,11 @@ body {
     0 0 24px #e0b84a55;
 }
 
+.subtag {
+  margin-top: -6px !important;
+  font-size: 13px !important;
+  opacity: 0.85;
+}
 .tagline,
 .story {
   margin: 0 0 12px;
