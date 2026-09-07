@@ -47,11 +47,11 @@ export class Renderer {
 
     ctx.save();
     ctx.translate(shakeX, shakeY);
-    this._sea(ctx, pal, game.bgScroll);
-    this._islands(ctx, game.bgScroll * 0.55);
-    this._clouds(ctx, game.bgScroll * 0.35, pal);
-    if (game.palette() === "storm") this._lightning(ctx);
-    if (game.palette() === "fortress") this._searchlights(ctx, game.bgScroll);
+    const key = game.palette();
+    this._sea(ctx, pal, game.bgScroll, key);
+    this._islands(ctx, game.bgScroll * 0.55, key);
+    this._clouds(ctx, game.bgScroll * 0.35, pal, key);
+    this._stageFX(ctx, game.bgScroll, key);
 
     if (game.mode !== "title" && game.mode !== "howto") {
       this._pickups(ctx, game);
@@ -94,32 +94,135 @@ export class Renderer {
     }
   }
 
-  _sea(ctx, pal, scroll) {
-    ctx.fillStyle = pal.sea0;
-    ctx.fillRect(0, 0, W, H);
-    ctx.globalAlpha = 0.22;
+  _sea(ctx, pal, scroll, key) {
+    // céu / horizonte distinto por fase
+    if (key === "dusk") {
+      const sky = ctx.createLinearGradient(0, 0, 0, H * 0.45);
+      sky.addColorStop(0, "#2a1848");
+      sky.addColorStop(0.55, "#c45838");
+      sky.addColorStop(1, pal.sea0);
+      ctx.fillStyle = sky;
+      ctx.fillRect(0, 0, W, H * 0.42);
+      ctx.fillStyle = pal.sea0;
+      ctx.fillRect(0, H * 0.4, W, H);
+      // sol
+      ctx.fillStyle = "#ffb060";
+      ctx.beginPath();
+      ctx.arc(W * 0.72, H * 0.28, 28, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 0.25;
+      ctx.fillStyle = "#ff8040";
+      ctx.beginPath();
+      ctx.arc(W * 0.72, H * 0.28, 48, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    } else if (key === "storm") {
+      ctx.fillStyle = pal.sea0;
+      ctx.fillRect(0, 0, W, H);
+      ctx.fillStyle = "#0a1828";
+      ctx.globalAlpha = 0.5;
+      ctx.fillRect(0, 0, W, H * 0.35);
+      ctx.globalAlpha = 1;
+    } else if (key === "fortress") {
+      const g = ctx.createLinearGradient(0, 0, 0, H);
+      g.addColorStop(0, "#1a1428");
+      g.addColorStop(0.4, pal.sea0);
+      g.addColorStop(1, "#0a0810");
+      ctx.fillStyle = g;
+      ctx.fillRect(0, 0, W, H);
+    } else {
+      ctx.fillStyle = pal.sea0;
+      ctx.fillRect(0, 0, W, H);
+      if (key === "tropic") {
+        const g = ctx.createLinearGradient(0, 0, 0, H * 0.3);
+        g.addColorStop(0, pal.sky);
+        g.addColorStop(1, pal.sea0);
+        ctx.fillStyle = g;
+        ctx.fillRect(0, 0, W, H * 0.28);
+      }
+    }
+
+    const band = key === "storm" ? 0.14 : key === "tropic" ? 0.28 : 0.2;
+    ctx.globalAlpha = band;
     ctx.fillStyle = pal.sea1;
-    for (let i = 0; i < 5; i++) {
-      const y = ((i * 130 + scroll * 0.45) % (H + 130)) - 65;
-      ctx.fillRect(0, y, W, 50);
+    const bands = key === "tropic" ? 6 : 5;
+    for (let i = 0; i < bands; i++) {
+      const y = ((i * 130 + scroll * (key === "storm" ? 0.7 : 0.45)) % (H + 130)) - 65;
+      ctx.fillRect(0, y, W, key === "dusk" ? 36 : 50);
     }
     ctx.globalAlpha = 1;
     ctx.strokeStyle = pal.foam;
-    ctx.lineWidth = 1;
-    for (let i = 0; i < 10; i++) {
-      const y = ((i * 64 + scroll * 0.95) % (H + 64)) - 32;
-      ctx.globalAlpha = 0.12;
+    ctx.lineWidth = key === "tropic" ? 1.4 : 1;
+    const waves = key === "storm" ? 14 : 10;
+    const amp = key === "storm" ? 3.2 : key === "tropic" ? 2.4 : 1.8;
+    for (let i = 0; i < waves; i++) {
+      const y = ((i * 64 + scroll * (key === "fortress" ? 0.55 : 0.95)) % (H + 64)) - 32;
+      ctx.globalAlpha = key === "overcast" ? 0.08 : 0.12;
       ctx.beginPath();
       ctx.moveTo(0, y);
-      for (let x = 0; x <= W; x += 20) {
-        ctx.lineTo(x, y + Math.sin(x * 0.06 + i) * 1.8);
+      for (let x = 0; x <= W; x += key === "storm" ? 14 : 20) {
+        ctx.lineTo(x, y + Math.sin(x * 0.06 + i + scroll * 0.01) * amp);
       }
       ctx.stroke();
     }
     ctx.globalAlpha = 1;
   }
 
-  _islands(ctx, scroll) {
+  _islands(ctx, scroll, key) {
+    if (key === "storm") {
+      // poucos rochedos escuros
+      for (let i = 0; i < 4; i++) {
+        const it = this.islands[i];
+        const y = (it.y + scroll) % (H + 160) - 80;
+        ctx.fillStyle = "#1a2430";
+        ctx.beginPath();
+        ctx.moveTo(it.x - 22, y + 18);
+        ctx.lineTo(it.x - 8, y);
+        ctx.lineTo(it.x + 14, y + 6);
+        ctx.lineTo(it.x + 20, y + 20);
+        ctx.closePath();
+        ctx.fill();
+      }
+      return;
+    }
+    if (key === "fortress") {
+      for (let i = 0; i < this.islands.length; i++) {
+        const it = this.islands[i];
+        const y = (it.y + scroll * 0.8) % (H + 180) - 90;
+        const w = 40 + (i % 3) * 18;
+        ctx.fillStyle = i % 2 ? "#3a3048" : "#2a2038";
+        ctx.fillRect(it.x - w / 2, y, w, 14);
+        ctx.fillStyle = "#e0b84a55";
+        ctx.fillRect(it.x - w / 2, y, w, 2);
+        ctx.fillStyle = "#ff6a4a88";
+        if (i % 3 === 0) ctx.fillRect(it.x - 4, y - 10, 3, 10);
+      }
+      return;
+    }
+    if (key === "overcast") {
+      for (const it of this.islands) {
+        const y = (it.y + scroll) % (H + 160) - 80;
+        const spr = this.sprites.island[it.i];
+        ctx.save();
+        ctx.globalAlpha = 0.85;
+        ctx.filter = "grayscale(0.7) brightness(0.75)";
+        ctx.drawImage(spr, it.x - spr.width * it.s * 0.5, y, spr.width * it.s, spr.height * it.s);
+        ctx.restore();
+      }
+      return;
+    }
+    if (key === "dusk") {
+      for (const it of this.islands) {
+        const y = (it.y + scroll) % (H + 160) - 80;
+        const spr = this.sprites.island[it.i];
+        ctx.save();
+        ctx.filter = "brightness(0.35) sepia(0.6)";
+        ctx.drawImage(spr, it.x - spr.width * it.s * 0.5, y, spr.width * it.s * 1.05, spr.height * it.s);
+        ctx.restore();
+      }
+      return;
+    }
+    // tropic — ilhas verdes cheias
     for (const it of this.islands) {
       const y = (it.y + scroll) % (H + 160) - 80;
       const spr = this.sprites.island[it.i];
@@ -127,40 +230,86 @@ export class Renderer {
     }
   }
 
-  _clouds(ctx, scroll, pal) {
-    ctx.globalAlpha = pal === PAL.storm ? 0.22 : 0.28;
+  _clouds(ctx, scroll, pal, key) {
+    if (key === "fortress") return;
+    let a = 0.28;
+    if (key === "storm") a = 0.45;
+    else if (key === "overcast") a = 0.4;
+    else if (key === "dusk") a = 0.18;
+    else if (key === "tropic") a = 0.22;
+    ctx.globalAlpha = a;
+    const spd = key === "storm" ? 1.4 : 1;
     for (const it of this.clouds) {
-      const y = (it.y + scroll) % (H + 180) - 90;
+      const y = (it.y + scroll * spd) % (H + 180) - 90;
       const spr = this.sprites.cloud[it.i];
-      ctx.drawImage(spr, it.x - 20, y);
+      if (key === "storm" || key === "overcast") {
+        ctx.save();
+        ctx.filter = "brightness(0.55)";
+        ctx.drawImage(spr, it.x - 20, y, spr.width * 1.3, spr.height * 1.2);
+        ctx.restore();
+      } else if (key === "dusk") {
+        ctx.save();
+        ctx.filter = "sepia(0.5) hue-rotate(-20deg)";
+        ctx.drawImage(spr, it.x - 20, y);
+        ctx.restore();
+      } else {
+        ctx.drawImage(spr, it.x - 20, y);
+      }
     }
     ctx.globalAlpha = 1;
   }
 
-  _lightning(ctx) {
-    if (Math.random() < 0.012) {
-      ctx.fillStyle = "rgba(200,230,255,0.18)";
+  _stageFX(ctx, scroll, key) {
+    if (key === "storm") {
+      if (Math.random() < 0.02) {
+        ctx.fillStyle = "rgba(200,230,255,0.22)";
+        ctx.fillRect(0, 0, W, H);
+      }
+      ctx.strokeStyle = "rgba(180,210,255,0.18)";
+      ctx.lineWidth = 1;
+      for (let i = 0; i < 18; i++) {
+        const x = (i * 37 + scroll * 2.2) % (W + 20) - 10;
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x - 8, H);
+        ctx.stroke();
+      }
+    } else if (key === "fortress") {
+      ctx.save();
+      ctx.globalAlpha = 0.16;
+      ctx.fillStyle = "#e0b84a";
+      ctx.beginPath();
+      ctx.moveTo(40, H);
+      ctx.lineTo(80 + Math.sin(scroll * 0.02) * 40, 0);
+      ctx.lineTo(140 + Math.sin(scroll * 0.02) * 40, 0);
+      ctx.lineTo(90, H);
+      ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(240, H);
+      ctx.lineTo(200 + Math.cos(scroll * 0.015) * 50, 0);
+      ctx.lineTo(270 + Math.cos(scroll * 0.015) * 50, 0);
+      ctx.lineTo(300, H);
+      ctx.fill();
+      ctx.restore();
+      // faíscas
+      ctx.fillStyle = "#ff9a4a";
+      for (let i = 0; i < 6; i++) {
+        const x = (i * 61 + scroll * 0.3) % W;
+        const y = (i * 97 + scroll * 0.8) % H;
+        ctx.globalAlpha = 0.35;
+        ctx.fillRect(x, y, 2, 2);
+      }
+      ctx.globalAlpha = 1;
+    } else if (key === "tropic") {
+      ctx.fillStyle = "rgba(255,255,200,0.04)";
+      ctx.fillRect(0, 0, W, H * 0.25);
+    } else if (key === "overcast") {
+      ctx.fillStyle = "rgba(40,60,80,0.18)";
+      ctx.fillRect(0, 0, W, H);
+    } else if (key === "dusk") {
+      ctx.fillStyle = "rgba(255,100,40,0.08)";
       ctx.fillRect(0, 0, W, H);
     }
-  }
-
-  _searchlights(ctx, scroll) {
-    ctx.save();
-    ctx.globalAlpha = 0.12;
-    ctx.fillStyle = "#e0b84a";
-    ctx.beginPath();
-    ctx.moveTo(40, H);
-    ctx.lineTo(80 + Math.sin(scroll * 0.02) * 40, 0);
-    ctx.lineTo(140 + Math.sin(scroll * 0.02) * 40, 0);
-    ctx.lineTo(90, H);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.moveTo(240, H);
-    ctx.lineTo(200 + Math.cos(scroll * 0.015) * 50, 0);
-    ctx.lineTo(270 + Math.cos(scroll * 0.015) * 50, 0);
-    ctx.lineTo(300, H);
-    ctx.fill();
-    ctx.restore();
   }
 
   _player(ctx, game) {
