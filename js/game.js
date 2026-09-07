@@ -47,11 +47,11 @@ const KIND = {
 };
 
 const BOSS = {
-  albatroz: { hp: 90, r: 38, score: 5000, attacks: ["spread", "aimed", "rain"] },
-  sentinela: { hp: 120, r: 40, score: 7000, attacks: ["aimed", "ring", "sweep"] },
-  serpente: { hp: 140, r: 36, score: 8500, attacks: ["spread", "ring", "rain"] },
-  tempestade: { hp: 160, r: 42, score: 10000, attacks: ["ring", "aimed", "sweep"] },
-  nadir: { hp: 220, r: 48, score: 15000, attacks: ["spread", "aimed", "ring", "rain", "sweep"] },
+  albatroz: { hp: 100, r: 38, score: 5500, attacks: ["spread", "aimed", "rain", "fan"] },
+  sentinela: { hp: 130, r: 40, score: 7500, attacks: ["aimed", "ring", "sweep", "burst"] },
+  serpente: { hp: 150, r: 36, score: 9000, attacks: ["spread", "ring", "rain", "spiral"] },
+  tempestade: { hp: 175, r: 42, score: 11000, attacks: ["ring", "aimed", "sweep", "spiral", "fan"] },
+  nadir: { hp: 240, r: 48, score: 16000, attacks: ["spread", "aimed", "ring", "rain", "sweep", "spiral", "burst", "fan"] },
 };
 
 function pool() {
@@ -88,6 +88,7 @@ export class Game {
     this.runT = 0;
     this.emptyT = 0;
     this.bombCd = 0;
+    this.hitStop = 0;
     this.player = this._player();
     this.enemies = pool();
     this.pBullets = pool();
@@ -159,6 +160,10 @@ export class Game {
   }
 
   update(dt, input) {
+    if (this.hitStop > 0) {
+      this.hitStop -= dt;
+      dt *= 0.15;
+    }
     this.bgScroll += dt * this._scrollSpeed();
     this.fx.update(dt);
     if (this.bannerT > 0) this.bannerT -= dt;
@@ -289,6 +294,9 @@ export class Game {
       this.emptyT = 0;
       this._enemy("vespa", 48, -22, "down", 1, 1);
       this._enemy("vespa", 312, -22, "down", 1, 2);
+      if (this.stageIndex >= 2) {
+        this._enemy("gaviao", W / 2, -30, "dive", 1 + this.loop * 0.1, 0);
+      }
     }
   }
 
@@ -394,6 +402,8 @@ export class Game {
       atkT: this.loop === 0 && this.stageIndex === 0 ? 2.4 : 1.4,
       attacks: b.attacks,
       entered: false,
+      raged: false,
+      frenzied: false,
     };
     this.enemies.push(e);
     this.boss = e;
@@ -473,7 +483,32 @@ export class Game {
       return;
     }
     e.entered = true;
-    e.x = e.homeX + Math.sin(e.t * 0.65) * (e.kind === "serpente" ? 110 : 88);
+    const hpRatio = e.hp / e.maxHp;
+    const rage = hpRatio < 0.5;
+    const frenzy = hpRatio < 0.25;
+    if (rage && !e.raged) {
+      e.raged = true;
+      e.phase = 2;
+      this.banner = "FASE 2";
+      this.bannerSub = "O chefe enlouquece.";
+      this.bannerT = 1.6;
+      this.bannerKind = "boss";
+      this.fx.flash = 0.18;
+      this.audio.warning();
+    }
+    if (frenzy && !e.frenzied) {
+      e.frenzied = true;
+      e.phase = 3;
+      this.banner = "FASE FINAL";
+      this.bannerSub = "Sobreviva ao fogo.";
+      this.bannerT = 1.6;
+      this.bannerKind = "boss";
+      this.fx.shake = Math.max(this.fx.shake, 5);
+      this.audio.warning();
+    }
+    const sway = (e.kind === "serpente" ? 110 : 88) * (frenzy ? 1.25 : rage ? 1.1 : 1);
+    const swaySpd = (frenzy ? 1.05 : rage ? 0.85 : 0.65);
+    e.x = e.homeX + Math.sin(e.t * swaySpd) * sway;
     if (e.kind === "serpente") e.y = 96 + Math.sin(e.t * 1.1) * 18;
 
     if (e.telegraph > 0) {
@@ -483,43 +518,70 @@ export class Game {
     }
     e.atkT -= dt;
     if (e.atkT <= 0) {
-      const hpRatio = e.hp / e.maxHp;
       let poolAtk = e.attacks;
-      if (hpRatio < 0.4) poolAtk = e.attacks;
+      if (frenzy) poolAtk = e.attacks;
+      else if (rage) poolAtk = e.attacks.filter((a) => a !== "rain").concat(["fan", "burst"]);
       e.attack = poolAtk[(Math.random() * poolAtk.length) | 0];
-      e.telegraph = 0.72;
-      e.atkT = hpRatio < 0.45 ? 0.85 : this.loop === 0 && this.stageIndex === 0 ? 1.7 : 1.25;
+      e.telegraph = frenzy ? 0.48 : rage ? 0.58 : 0.72;
+      e.atkT = frenzy
+        ? 0.62
+        : rage
+          ? 0.78
+          : this.loop === 0 && this.stageIndex === 0
+            ? 1.55
+            : 1.15;
       this.audio.warning();
     }
   }
 
   _bossAttack(e) {
     const p = this.player;
-    const spd = 120 + this.loop * 18 + this.stageIndex * 6;
+    const rage = e.hp / e.maxHp < 0.5;
+    const spd = 120 + this.loop * 18 + this.stageIndex * 6 + (rage ? 16 : 0);
     if (e.attack === "spread") {
-      for (let i = -4; i <= 4; i++) {
-        this._ebullet(e.x, e.y + 16, i * 38, spd);
+      for (let i = -5; i <= 5; i++) {
+        this._ebullet(e.x, e.y + 16, i * 34, spd);
       }
     } else if (e.attack === "aimed") {
       const a = angleTo(e.x, e.y, p.x, p.y);
-      for (let i = -1; i <= 1; i++) {
-        const ang = a + i * 0.18;
-        this._ebullet(e.x, e.y + 10, Math.cos(ang) * (spd + 30), Math.sin(ang) * (spd + 30));
+      for (let i = -2; i <= 2; i++) {
+        const ang = a + i * 0.14;
+        this._ebullet(e.x, e.y + 10, Math.cos(ang) * (spd + 36), Math.sin(ang) * (spd + 36));
       }
     } else if (e.attack === "ring") {
-      for (let i = 0; i < 14; i++) {
-        if (i === 3 || i === 10) continue;
-        const a = (i / 14) * Math.PI * 2 + e.t;
+      const n = rage ? 16 : 14;
+      for (let i = 0; i < n; i++) {
+        if (!rage && (i === 3 || i === 10)) continue;
+        const a = (i / n) * Math.PI * 2 + e.t;
         this._ebullet(e.x, e.y, Math.cos(a) * spd, Math.sin(a) * spd);
       }
     } else if (e.attack === "rain") {
-      for (let i = 0; i < 8; i++) {
-        this._ebullet(30 + i * 42, 8, 0, spd * 0.85);
+      for (let i = 0; i < 9; i++) {
+        this._ebullet(24 + i * 38, 8, (i - 4) * 6, spd * 0.9);
       }
     } else if (e.attack === "sweep") {
-      for (let i = 0; i < 7; i++) {
-        const a = 0.35 + i * 0.18;
+      for (let i = 0; i < 8; i++) {
+        const a = 0.3 + i * 0.17;
         this._ebullet(e.x, e.y + 12, Math.cos(a) * spd, Math.sin(a) * spd);
+      }
+    } else if (e.attack === "spiral") {
+      for (let i = 0; i < 10; i++) {
+        const a = e.t * 2.2 + i * 0.55;
+        this._ebullet(e.x, e.y, Math.cos(a) * spd, Math.sin(a) * spd);
+      }
+    } else if (e.attack === "fan") {
+      const a = angleTo(e.x, e.y, p.x, p.y);
+      for (let i = -3; i <= 3; i++) {
+        const ang = a + i * 0.22;
+        this._ebullet(e.x, e.y + 8, Math.cos(ang) * spd, Math.sin(ang) * spd);
+      }
+    } else if (e.attack === "burst") {
+      for (let wave = 0; wave < 2; wave++) {
+        for (let i = 0; i < 6; i++) {
+          const a = (i / 6) * Math.PI * 2 + wave * 0.4;
+          const s = spd * (0.85 + wave * 0.2);
+          this._ebullet(e.x, e.y, Math.cos(a) * s, Math.sin(a) * s);
+        }
       }
     }
   }
@@ -581,8 +643,10 @@ export class Game {
         if (e.dead) continue;
         if (circleHit(b.x, b.y, b.r, e.x, e.y, e.r)) {
           e.hp -= b.dmg;
-          e.flash = 0.08;
+          e.flash = 0.1;
           hit = true;
+          if (e.boss) this.hitStop = Math.max(this.hitStop, 0.045);
+          else if (e.hp <= 0) this.hitStop = Math.max(this.hitStop, 0.03);
           if (e.hp <= 0) this._kill(e, false);
           break;
         }
