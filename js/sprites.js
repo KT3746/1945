@@ -63,6 +63,19 @@ export function bakeSprites() {
     g.fillRect(15, 1, 2, 5);
     g.fillStyle = "#2a2010";
     g.fillRect(13, 34, 6, 3);
+    // motor glow
+    const eg = g.createRadialGradient(16, 37, 0, 16, 38, 8);
+    eg.addColorStop(0, "rgba(120,220,255,0.85)");
+    eg.addColorStop(0.5, "rgba(80,160,255,0.35)");
+    eg.addColorStop(1, "rgba(40,100,255,0)");
+    g.fillStyle = eg;
+    g.beginPath();
+    g.arc(16, 38, 8, 0, Math.PI * 2);
+    g.fill();
+    g.fillStyle = "#ffe08a";
+    g.globalAlpha = 0.7;
+    g.fillRect(15, 36, 2, 3);
+    g.globalAlpha = 1;
   });
 
   s.vespa = canvas(24, 24, (g) => {
