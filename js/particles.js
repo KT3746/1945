@@ -80,7 +80,29 @@ export class FX {
     }
   }
 
-  puff(x, y, color = "#c9d4e0") {
+  muzzle(x, y) {
+    this._cap(80);
+    this.bits.push({
+      x, y, vx: 0, vy: -40,
+      life: 0.08, max: 0.08, r: 7,
+      color: "#fff6c8", kind: "glow",
+    });
+    for (let i = 0; i < 3; i++) {
+      this.bits.push({
+        x: x + (Math.random() - 0.5) * 6,
+        y: y - 2,
+        vx: (Math.random() - 0.5) * 60,
+        vy: -80 - Math.random() * 60,
+        life: 0.12 + Math.random() * 0.08,
+        max: 0.2,
+        r: 1.2,
+        color: i ? "#9ad4ff" : "#ffe08a",
+        kind: "spark",
+      });
+    }
+  }
+
+    puff(x, y, color = "#c9d4e0") {
     this._cap(60);
     this.bits.push({
       x, y,
