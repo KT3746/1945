@@ -82,6 +82,7 @@ export class Game {
     this.banner = "";
     this.bannerSub = "";
     this.bannerT = 0;
+    this.bannerKind = "stage";
     this.cleared = false;
     this.introT = 0;
     this.runT = 0;
@@ -136,12 +137,17 @@ export class Game {
     const loop = this.loop ? ` · ciclo ${this.loop + 1}` : "";
     this.banner = `${meta.name}${loop}`;
     this.bannerSub = meta.subtitle;
-    this.bannerT = 2.4;
+    this.bannerT = 2.6;
+    this.bannerKind = "stage";
     this.waveT = 0;
     this.waveI = 0;
     this.pendingBoss = false;
     this.boss = null;
     this.cleared = false;
+    try {
+      this.audio.setStage?.(this.stageIndex, meta.palette);
+      this.audio.stage();
+    } catch (_) {}
   }
 
   pause() {
@@ -222,7 +228,9 @@ export class Game {
     const p = this.player;
     const n = p.spreadT > 0 ? Math.max(p.spread, 3) : p.spread;
     const shots = n >= 5 ? 5 : n >= 3 ? 3 : 1;
-    const speed = 420;
+    const speed = 440;
+    this.fx.muzzle(p.x, p.y - 18);
+    p.y += 1.1;
     if (shots === 1) this._pbullet(p.x, p.y - 18, 0, -speed);
     else if (shots === 3) {
       this._pbullet(p.x, p.y - 18, 0, -speed);
@@ -390,9 +398,14 @@ export class Game {
     this.enemies.push(e);
     this.boss = e;
     this.audio.warning();
+    this.audio.setIntense(1);
     this.banner = BOSS_NAMES[id];
     this.bannerSub = (BOSS_META[id] && BOSS_META[id].subtitle) || "Chefe à frente.";
-    this.bannerT = 2.2;
+    this.bannerT = 2.8;
+    this.bannerKind = "boss";
+    this.fx.shake = Math.max(this.fx.shake, 6);
+    this.fx.flash = 0.22;
+    this.fx.floatText(W / 2, 120, "ALERTA", "#ff6a4a");
   }
 
   _updateEnemies(dt) {
@@ -474,7 +487,7 @@ export class Game {
       let poolAtk = e.attacks;
       if (hpRatio < 0.4) poolAtk = e.attacks;
       e.attack = poolAtk[(Math.random() * poolAtk.length) | 0];
-      e.telegraph = 0.55;
+      e.telegraph = 0.72;
       e.atkT = hpRatio < 0.45 ? 0.85 : this.loop === 0 && this.stageIndex === 0 ? 1.7 : 1.25;
       this.audio.warning();
     }
@@ -611,8 +624,10 @@ export class Game {
 
   _kill(e, fromBomb) {
     e.dead = true;
-    this.fx.boom(e.x, e.y, e.boss ? 14 : 12, e.boss ? "#e0b84a" : "#e8c070");
-    this.audio.explosion();
+    if (!e.boss) {
+      this.fx.boom(e.x, e.y, 12, "#e8c070");
+      this.audio.explosion();
+    }
     if (fromBomb) {
       this._addScore(BOMB_SCORE);
       this.fx.floatText(e.x, e.y - 10, `+${BOMB_SCORE}`, "#9ad4ff");
@@ -638,6 +653,7 @@ export class Game {
       });
     }
     if (e.boss) {
+      const bx = e.x, by = e.y;
       this.boss = null;
       this.pendingBoss = false;
       this.cleared = true;
@@ -649,9 +665,12 @@ export class Game {
       }
       this.enemies.length = 0;
       this.fx.reset();
-      // som leve — bigBoom no celular engasga o main thread
-      try { this.audio.ui(); } catch (_) {}
-      // abre vitória na hora (não depende de outro frame / _checkStage)
+      // celebração leve (evita bigBoom no mobile)
+      this.fx.boom(bx, by, 18, "#e0b84a");
+      this.fx.boom(bx - 12, by + 6, 10, "#ff9a4a");
+      this.fx.shake = 9;
+      this.fx.flash = 0.24;
+      try { this.audio.explosion(); this.audio.stage(); } catch (_) {}
       this.mode = "stageclear";
       this._saveHigh();
     }
