@@ -19,7 +19,9 @@ export const STAGES = [
       e(23.6, "single", { kind: "bufalo", x: 160, pattern: "down" }),
       e(26.8, "line", { kind: "artilheiro", n: 2, x0: 100, gap: 140, pattern: "aim" }),
       e(30.0, "single", { kind: "bufalo", x: 220, pattern: "down" }),
-      e(33.4, "boss", { kind: "albatroz" }),
+      e(31.6, "swoop", { kind: "gaviao", n: 3, side: "left" }),
+      e(32.4, "swoop", { kind: "gaviao", n: 3, side: "right" }),
+      e(34.2, "boss", { kind: "albatroz" }),
     ],
   },
   {
@@ -36,7 +38,8 @@ export const STAGES = [
       e(15.0, "ground", { kind: "ninho", x: 180 }),
       e(16.0, "line", { kind: "vespa", n: 7, x0: 30, gap: 48, pattern: "sine" }),
       e(19.5, "swoop", { kind: "gaviao", n: 5, side: "left" }),
-      e(23.0, "boss", { kind: "sentinela" }),
+      e(21.0, "v", { kind: "vespa", n: 6 }),
+      e(23.4, "boss", { kind: "sentinela" }),
     ],
   },
   {
