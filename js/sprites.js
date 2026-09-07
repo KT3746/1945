@@ -410,11 +410,40 @@ export function bakeSprites() {
     canvas(64, 40, (g) => island(g, 64, 40, "#3a7a44", "#245830")),
     canvas(96, 52, (g) => island(g, 96, 52, "#2e6040", "#183c28")),
   ];
-
+  s.islandPalm = [
+    canvas(72, 64, (g) => palmIsle(g, 72, 64)),
+    canvas(88, 70, (g) => palmIsle(g, 88, 70)),
+    canvas(60, 56, (g) => palmIsle(g, 60, 56)),
+  ];
+  s.islandRock = [
+    canvas(70, 40, (g) => rockIsle(g, 70, 40, "#4a5560", "#2a3038")),
+    canvas(90, 48, (g) => rockIsle(g, 90, 48, "#5a6570", "#303840")),
+    canvas(56, 34, (g) => rockIsle(g, 56, 34, "#3a4450", "#1a2028")),
+  ];
+  s.islandDusk = [
+    canvas(80, 44, (g) => rockIsle(g, 80, 44, "#2a1830", "#140818")),
+    canvas(100, 50, (g) => rockIsle(g, 100, 50, "#3a2040", "#1a1020")),
+    canvas(64, 36, (g) => rockIsle(g, 64, 36, "#241828", "#100810")),
+  ];
+  s.plat = [
+    canvas(96, 28, (g) => fortressPlat(g, 96, 28)),
+    canvas(70, 22, (g) => fortressPlat(g, 70, 22)),
+    canvas(110, 30, (g) => fortressPlat(g, 110, 30)),
+  ];
   s.cloud = [
     canvas(70, 28, (g) => cloud(g, 70, 28, "rgba(255,255,255,0.55)")),
     canvas(50, 22, (g) => cloud(g, 50, 22, "rgba(255,255,255,0.4)")),
     canvas(90, 30, (g) => cloud(g, 90, 30, "rgba(255,255,255,0.35)")),
+  ];
+  s.cloudDark = [
+    canvas(90, 36, (g) => cloud(g, 90, 36, "rgba(40,50,70,0.7)")),
+    canvas(110, 40, (g) => cloud(g, 110, 40, "rgba(30,40,55,0.65)")),
+    canvas(70, 30, (g) => cloud(g, 70, 30, "rgba(50,60,80,0.6)")),
+  ];
+  s.cloudDusk = [
+    canvas(80, 30, (g) => cloud(g, 80, 30, "rgba(180,90,70,0.45)")),
+    canvas(100, 34, (g) => cloud(g, 100, 34, "rgba(160,70,90,0.4)")),
+    canvas(60, 26, (g) => cloud(g, 60, 26, "rgba(200,110,60,0.35)")),
   ];
 
   return s;
@@ -455,6 +484,71 @@ function cloud(g, w, h, fill) {
   g.ellipse(w * 0.55, h * 0.5, w * 0.32, h * 0.38, 0, 0, Math.PI * 2);
   g.ellipse(w * 0.72, h * 0.58, w * 0.22, h * 0.28, 0, 0, Math.PI * 2);
   g.fill();
+}
+
+
+function palmIsle(g, w, h) {
+  g.fillStyle = "#d8c078";
+  g.beginPath();
+  g.ellipse(w * 0.5, h * 0.78, w * 0.42, h * 0.16, 0, 0, Math.PI * 2);
+  g.fill();
+  g.fillStyle = "#2e8a48";
+  g.beginPath();
+  g.ellipse(w * 0.5, h * 0.68, w * 0.34, h * 0.14, 0, 0, Math.PI * 2);
+  g.fill();
+  // tronco
+  g.fillStyle = "#6a4420";
+  g.fillRect(w * 0.46, h * 0.28, w * 0.08, h * 0.4);
+  // folhas
+  g.strokeStyle = "#1f7a38";
+  g.lineWidth = 3;
+  for (let i = -2; i <= 2; i++) {
+    g.beginPath();
+    g.moveTo(w * 0.5, h * 0.3);
+    g.quadraticCurveTo(w * 0.5 + i * 14, h * 0.18, w * 0.5 + i * 22, h * 0.34);
+    g.stroke();
+  }
+  g.fillStyle = "#c9a227";
+  g.beginPath();
+  g.arc(w * 0.42, h * 0.42, 2, 0, Math.PI * 2);
+  g.arc(w * 0.58, h * 0.44, 2, 0, Math.PI * 2);
+  g.fill();
+}
+
+function rockIsle(g, w, h, top, bottom) {
+  g.fillStyle = bottom;
+  g.beginPath();
+  g.moveTo(w * 0.08, h * 0.85);
+  g.lineTo(w * 0.2, h * 0.4);
+  g.lineTo(w * 0.45, h * 0.22);
+  g.lineTo(w * 0.7, h * 0.35);
+  g.lineTo(w * 0.92, h * 0.8);
+  g.closePath();
+  g.fill();
+  g.fillStyle = top;
+  g.beginPath();
+  g.moveTo(w * 0.18, h * 0.7);
+  g.lineTo(w * 0.35, h * 0.32);
+  g.lineTo(w * 0.55, h * 0.28);
+  g.lineTo(w * 0.78, h * 0.65);
+  g.closePath();
+  g.fill();
+  g.fillStyle = "#ffffff22";
+  g.fillRect(w * 0.4, h * 0.35, 4, 3);
+}
+
+function fortressPlat(g, w, h) {
+  g.fillStyle = "#2a2438";
+  g.fillRect(2, h * 0.35, w - 4, h * 0.45);
+  g.fillStyle = "#4a4060";
+  g.fillRect(0, h * 0.28, w, 5);
+  g.fillStyle = "#e0b84a";
+  g.fillRect(4, h * 0.28, w - 8, 2);
+  g.fillStyle = "#ff6a4a";
+  g.fillRect(w * 0.2, 2, 3, h * 0.28);
+  g.fillRect(w * 0.7, 4, 3, h * 0.24);
+  g.fillStyle = "#9ad4ff55";
+  g.fillRect(w * 0.4, h * 0.5, w * 0.2, 4);
 }
 
 export function drawProp(ctx, x, y, t, color = "rgba(220,220,200,0.45)") {
