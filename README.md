@@ -2,7 +2,7 @@
 
 Shoot-em-up vertical original (vista de cima), no clima dos fliperamas de avião dos anos 80. Nomes, história, arte e sons são **próprios** — nada de marcas de terceiros. Tudo em português do Brasil.
 
-**Jogar online:** [https://kt3746.github.io/1945/](https://kt3746.github.io/1945/)
+**Jogar online:** [https://kt3746.github.io/grokbot-1945/](https://kt3746.github.io/grokbot-1945/)
 
 > *Domine o céu. Sobreviva às ondas.*
 
