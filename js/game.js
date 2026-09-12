@@ -233,7 +233,7 @@ export class Game {
     const p = this.player;
     const n = p.spreadT > 0 ? Math.max(p.spread, 3) : p.spread;
     const shots = n >= 5 ? 5 : n >= 3 ? 3 : 1;
-    const speed = 440;
+    const speed = 470;
     this.fx.muzzle(p.x, p.y - 18);
     p.y += 1.1;
     if (shots === 1) this._pbullet(p.x, p.y - 18, 0, -speed);
@@ -625,11 +625,24 @@ export class Game {
   }
 
   _updatePickups(dt) {
+    const p = this.player;
     for (let i = this.pickups.length - 1; i >= 0; i--) {
       const u = this.pickups[i];
       u.t += dt;
-      u.y += 42 * dt;
+      u.y += 48 * dt;
       u.x += Math.sin(u.t * 3) * 18 * dt;
+      // magnet divertido quando perto
+      if (p && p.alive) {
+        const dx = p.x - u.x;
+        const dy = p.y - u.y;
+        const d2 = dx * dx + dy * dy;
+        if (d2 < 95 * 95) {
+          const d = Math.sqrt(d2) || 1;
+          const pull = d2 < 50 * 50 ? 220 : 120;
+          u.x += (dx / d) * pull * dt;
+          u.y += (dy / d) * pull * dt;
+        }
+      }
       if (u.y > H + 20) this.pickups.splice(i, 1);
     }
   }
@@ -702,14 +715,27 @@ export class Game {
       const pts = scoreKill(e.score, this.combo, this.loop);
       this._addScore(pts);
       this.fx.floatText(e.x, e.y - 10, `+${pts}`, this.combo > 3 ? "#ff9a4a" : "#ffe08a");
-      if (this.combo >= 4) this.fx.floatText(e.x, e.y - 24, `COMBO x${this.combo}`, "#fff");
+      if (this.combo >= 3) {
+        this.fx.floatText(e.x, e.y - 24, `COMBO x${this.combo}`, "#fff");
+      }
+      if (this.combo === 5 || this.combo === 10 || this.combo === 15 || this.combo === 20) {
+        try { this.audio.combo(this.combo); } catch (_) {}
+        this.fx.flash = Math.max(this.fx.flash, 0.12);
+        this.fx.shake = Math.max(this.fx.shake, 3);
+        this.fx.floatText(e.x, e.y - 40, this.combo >= 15 ? "INSANO!" : this.combo >= 10 ? "ÉPICO!" : "BOM!", "#ff6a4a");
+      }
+      // combo high: rajada curta de brinde
+      if (this.combo === 8) {
+        this.player.rapidT = Math.max(this.player.rapidT, 3.5);
+        this.fx.floatText(this.player.x, this.player.y - 36, "RAJADA!", "#ff9a4a");
+      }
     }
     if (e.kind === "as" || e.drop) {
       const kind = e.kind === "as"
         ? WEAPON_DROPS[(Math.random() * WEAPON_DROPS.length) | 0]
         : e.drop;
       this.pickups.push({ x: e.x, y: e.y, kind, t: 0 });
-    } else if (!fromBomb && Math.random() < 0.16) {
+    } else if (!fromBomb && Math.random() < 0.24) {
       this.pickups.push({
         x: e.x,
         y: e.y,
