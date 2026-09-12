@@ -19,6 +19,7 @@ export class AudioSys {
     this._bassStep = 0;
     this._stageId = 0;
     this._palette = "tropic";
+    this._comboHype = 0;
   }
 
   unlock() {
@@ -44,11 +45,11 @@ export class AudioSys {
     this.master.connect(this.ctx.destination);
 
     this.musicGain = this.ctx.createGain();
-    this.musicGain.gain.value = 0.3;
+    this.musicGain.gain.value = 0.38;
     this.musicGain.connect(this.comp);
 
     this.sfxGain = this.ctx.createGain();
-    this.sfxGain.gain.value = 0.85;
+    this.sfxGain.gain.value = 0.92;
     this.sfxGain.connect(this.comp);
 
     this.unlocked = true;
@@ -110,7 +111,9 @@ export class AudioSys {
     this._beat -= dt;
     if (this._beat <= 0) {
       this._groove();
-      this._beat = this._intense ? 0.34 : 0.48;
+      const hype = this._intense ? 0.3 : 0.44;
+      this._beat = this._comboHype > 0 ? Math.min(hype, 0.28) : hype;
+      if (this._comboHype > 0) this._comboHype -= 1;
     }
   }
 
@@ -193,30 +196,42 @@ export class AudioSys {
   _groove() {
     const ctx = this.ctx;
     const t = ctx.currentTime;
-    const intense = !!this._intense;
+    const intense = !!this._intense || this._comboHype > 0;
+    const stage = this._stageId | 0;
 
     // kick
     const o = ctx.createOscillator();
     const g = ctx.createGain();
     o.type = "sine";
-    o.frequency.setValueAtTime(intense ? 150 : 118, t);
-    o.frequency.exponentialRampToValueAtTime(40, t + 0.13);
-    g.gain.setValueAtTime(intense ? 0.14 : 0.1, t);
-    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.15);
+    o.frequency.setValueAtTime(intense ? 160 : 122, t);
+    o.frequency.exponentialRampToValueAtTime(38, t + 0.12);
+    g.gain.setValueAtTime(intense ? 0.16 : 0.11, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + 0.14);
     o.connect(g);
     g.connect(this.musicGain);
     o.start(t);
-    o.stop(t + 0.16);
+    o.stop(t + 0.15);
 
     this._step++;
-    // snare/noise every other
-    if (this._step % 2 === 0) this.noise(0.05, intense ? 0.05 : 0.03, 3500);
-
-    // melodic pluck
+    // snare / clap
     if (this._step % 2 === 0) {
-      const scale = intense
-        ? [349, 415, 466, 554, 622]
-        : [294, 349, 392, 440, 523];
+      this.noise(0.045, intense ? 0.055 : 0.032, 4200);
+      this.tone(180, "triangle", 0.04, 0.03, -40);
+    }
+    // hi-hat ticks
+    if (this._step % 1 === 0) this.noise(0.015, intense ? 0.03 : 0.018, 9000);
+
+    // melodic pluck — escala muda por estágio
+    if (this._step % 2 === 0) {
+      const scales = [
+        [294, 349, 392, 440, 523],
+        [277, 330, 370, 415, 494],
+        [311, 370, 415, 466, 554],
+        [262, 311, 349, 415, 494],
+        [233, 294, 349, 415, 466],
+      ];
+      const hypeScale = [392, 466, 523, 622, 698, 784];
+      const scale = intense ? hypeScale : scales[stage % scales.length];
       const f0 = scale[this._bassStep % scale.length];
       this._bassStep++;
       const pl = ctx.createOscillator();
@@ -226,23 +241,28 @@ export class AudioSys {
       pl.type = "triangle";
       pl2.type = "sine";
       pl.frequency.value = f0;
-      pl2.frequency.value = f0 * 2;
+      pl2.frequency.value = f0 * 2.01;
       pf.type = "lowpass";
-      pf.frequency.setValueAtTime(3200, t);
-      pf.frequency.exponentialRampToValueAtTime(700, t + 0.24);
-      pg.gain.setValueAtTime(0.055, t);
-      pg.gain.exponentialRampToValueAtTime(0.0001, t + 0.26);
+      pf.frequency.setValueAtTime(intense ? 4200 : 3000, t);
+      pf.frequency.exponentialRampToValueAtTime(650, t + 0.22);
+      pg.gain.setValueAtTime(intense ? 0.07 : 0.058, t);
+      pg.gain.exponentialRampToValueAtTime(0.0001, t + 0.24);
       pl.connect(pf);
       pl2.connect(pf);
       pf.connect(pg);
       pg.connect(this.musicGain);
       pl.start(t);
       pl2.start(t);
-      pl.stop(t + 0.28);
-      pl2.stop(t + 0.28);
+      pl.stop(t + 0.26);
+      pl2.stop(t + 0.26);
     }
 
-    this.noise(0.02, intense ? 0.028 : 0.016, 8000);
+    // offbeat bass stab on 4
+    if (this._step % 4 === 0) {
+      this.tone(intense ? 98 : 82, "sine", 0.12, intense ? 0.08 : 0.055, -20);
+    }
+
+    this.noise(0.018, intense ? 0.03 : 0.016, 8500);
   }
 
   _env(g, t, a, d, vol) {
@@ -306,6 +326,7 @@ export class AudioSys {
     const ctx = this.ctx;
     const t = ctx.currentTime;
     const dest = this.sfxGain;
+    const jit = (Math.random() - 0.5) * 80;
 
     // Transient mecânico (click) — bandpass curto
     {
@@ -337,10 +358,10 @@ export class AudioSys {
       const g = ctx.createGain();
       o.type = "sawtooth";
       o2.type = "triangle";
-      o.frequency.setValueAtTime(1180, t);
-      o.frequency.exponentialRampToValueAtTime(220, t + 0.055);
-      o2.frequency.setValueAtTime(2360, t);
-      o2.frequency.exponentialRampToValueAtTime(440, t + 0.05);
+      o.frequency.setValueAtTime(1180 + jit, t);
+      o.frequency.exponentialRampToValueAtTime(220 + jit * 0.2, t + 0.05);
+      o2.frequency.setValueAtTime(2360 + jit * 2, t);
+      o2.frequency.exponentialRampToValueAtTime(440 + jit * 0.3, t + 0.045);
       f.type = "lowpass";
       f.frequency.setValueAtTime(5200, t);
       f.frequency.exponentialRampToValueAtTime(900, t + 0.06);
@@ -403,11 +424,12 @@ export class AudioSys {
   }
 
   explosion() {
-    this.noise(0.28, 0.22, 1100);
-    this.noise(0.16, 0.12, 3600);
-    this.tone(68, "sine", 0.3, 0.15, -24);
-    this.tone(140, "sawtooth", 0.16, 0.07, -60);
-    this.tone(220, "triangle", 0.1, 0.04, -80);
+    this.noise(0.26, 0.24, 1000);
+    this.noise(0.14, 0.13, 3800);
+    this.tone(64, "sine", 0.28, 0.16, -22);
+    this.tone(130, "sawtooth", 0.14, 0.075, -55);
+    this.tone(240, "triangle", 0.09, 0.045, -90);
+    this.tone(90, "sine", 0.18, 0.06, -30);
   }
 
   bigBoom() {
@@ -427,6 +449,16 @@ export class AudioSys {
     this.tone(240, "sawtooth", 0.22, 0.15, -170);
     this.tone(170, "square", 0.16, 0.07, -95);
     this.noise(0.15, 0.15, 750);
+  }
+
+  combo(n = 4) {
+    if (!this.unlocked || this.muted) return;
+    this._comboHype = Math.min(12, 4 + (n / 2) | 0);
+    const base = 520 + Math.min(8, n) * 40;
+    this.tone(base, "triangle", 0.06, 0.09);
+    setTimeout(() => this.tone(base * 1.25, "sine", 0.07, 0.08), 45);
+    setTimeout(() => this.tone(base * 1.5, "triangle", 0.1, 0.07), 95);
+    if (n >= 8) setTimeout(() => this.tone(base * 2, "sine", 0.14, 0.06), 150);
   }
 
   pickup() {
