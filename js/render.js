@@ -298,21 +298,30 @@ export class Renderer {
 
   _stageFX(ctx, scroll, key) {
     if (key === "tropic") {
-      // brilho na água
+      // brilho na água + flare quente
       ctx.fillStyle = "#fff8c0";
-      for (let i = 0; i < 10; i++) {
+      for (let i = 0; i < 18; i++) {
         const x = (i * 41 + scroll * 0.2) % W;
         const y = H * 0.5 + ((i * 73 + scroll * 0.5) % (H * 0.45));
-        ctx.globalAlpha = 0.12 + (i % 3) * 0.04;
-        ctx.fillRect(x, y, 2, 2);
+        ctx.globalAlpha = 0.14 + (i % 3) * 0.05;
+        ctx.fillRect(x, y, 2 + (i % 2), 2);
       }
+      ctx.globalAlpha = 0.08;
+      ctx.fillStyle = "#ffe08a";
+      ctx.fillRect(0, H * 0.08, W, 40);
       ctx.globalAlpha = 1;
     } else if (key === "overcast") {
-      ctx.fillStyle = "rgba(30,45,60,0.22)";
+      ctx.fillStyle = "rgba(30,45,60,0.32)";
       ctx.fillRect(0, 0, W, H);
+      // névoa em faixas
+      ctx.fillStyle = "rgba(160,180,200,0.08)";
+      for (let i = 0; i < 5; i++) {
+        const y = ((i * 130 + scroll * 0.35) % (H + 80)) - 40;
+        ctx.fillRect(0, y, W, 36);
+      }
       // chuvisco leve
-      ctx.strokeStyle = "rgba(180,200,220,0.12)";
-      for (let i = 0; i < 22; i++) {
+      ctx.strokeStyle = "rgba(180,200,220,0.16)";
+      for (let i = 0; i < 30; i++) {
         const x = (i * 29 + scroll * 1.2) % W;
         ctx.beginPath();
         ctx.moveTo(x, 0);
@@ -320,32 +329,48 @@ export class Renderer {
         ctx.stroke();
       }
     } else if (key === "dusk") {
-      ctx.fillStyle = "rgba(255,80,40,0.1)";
+      ctx.fillStyle = "rgba(255,60,20,0.16)";
       ctx.fillRect(0, 0, W, H);
       // reflexo do sol no mar
-      const rg = ctx.createRadialGradient(W / 2, H * 0.55, 4, W / 2, H * 0.55, 90);
-      rg.addColorStop(0, "rgba(255,180,80,0.25)");
+      const rg = ctx.createRadialGradient(W / 2, H * 0.55, 4, W / 2, H * 0.55, 110);
+      rg.addColorStop(0, "rgba(255,180,80,0.35)");
       rg.addColorStop(1, "rgba(255,100,40,0)");
       ctx.fillStyle = rg;
-      ctx.fillRect(W / 2 - 90, H * 0.45, 180, 160);
+      ctx.fillRect(W / 2 - 110, H * 0.42, 220, 180);
+      // silhuetas de frota no horizonte
+      ctx.fillStyle = "#1a0818";
+      ctx.globalAlpha = 0.45;
+      for (let i = 0; i < 4; i++) {
+        const x = 40 + i * 90 + Math.sin(scroll * 0.01 + i) * 6;
+        const y = H * 0.38;
+        ctx.fillRect(x, y, 28, 6);
+        ctx.fillRect(x + 8, y - 10, 4, 10);
+      }
+      ctx.globalAlpha = 1;
     } else if (key === "storm") {
-      if (Math.random() < 0.025) {
-        ctx.fillStyle = "rgba(210,230,255,0.28)";
+      if (Math.random() < 0.04) {
+        ctx.fillStyle = "rgba(210,230,255,0.35)";
         ctx.fillRect(0, 0, W, H);
       }
       // chuva forte
-      ctx.strokeStyle = "rgba(170,200,230,0.22)";
-      ctx.lineWidth = 1;
-      for (let i = 0; i < 28; i++) {
-        const x = (i * 23 + scroll * 3.2) % (W + 30) - 15;
+      ctx.strokeStyle = "rgba(170,200,230,0.28)";
+      ctx.lineWidth = 1.2;
+      for (let i = 0; i < 42; i++) {
+        const x = (i * 19 + scroll * 4.0) % (W + 30) - 15;
         ctx.beginPath();
         ctx.moveTo(x, 0);
-        ctx.lineTo(x - 12, H);
+        ctx.lineTo(x - 14, H);
         ctx.stroke();
       }
-      // nuvem baixa
-      ctx.fillStyle = "#00000044";
-      ctx.fillRect(0, 0, W, 50);
+      // nuvem baixa + vinheta lateral
+      ctx.fillStyle = "#00000055";
+      ctx.fillRect(0, 0, W, 60);
+      const vg = ctx.createLinearGradient(0, 0, W, 0);
+      vg.addColorStop(0, "rgba(0,0,0,0.35)");
+      vg.addColorStop(0.5, "rgba(0,0,0,0)");
+      vg.addColorStop(1, "rgba(0,0,0,0.35)");
+      ctx.fillStyle = vg;
+      ctx.fillRect(0, 0, W, H);
     } else if (key === "fortress") {
       // holofotes
       ctx.save();
@@ -436,10 +461,12 @@ export class Renderer {
   }
 
   _enemies(ctx, game) {
+    const tint = this._enemyTint(game.palette());
     for (const e of game.enemies) {
       if (e.dead) continue;
       const spr = this.sprites[e.kind] || this.sprites.vespa;
       if (e.flash > 0) ctx.filter = "brightness(2.4)";
+      else if (tint) ctx.filter = tint;
       if (e.telegraph > 0) {
         const pulse = 0.45 + Math.sin(this.time * 18) * 0.2;
         ctx.save();
@@ -496,20 +523,27 @@ export class Renderer {
       ctx.fillStyle = "#ffe08a";
       ctx.fillRect(b.x - 1.1, b.y - 1, 2.2, 8);
     }
+    const key = game.palette();
+    const bc =
+      key === "tropic" ? ["#e8fff0", "#2ad0a0", "#064028"] :
+      key === "overcast" ? ["#e0e8f0", "#7890a8", "#203040"] :
+      key === "dusk" ? ["#ffe0a0", "#ff6a30", "#601010"] :
+      key === "storm" ? ["#d0f0ff", "#50a0ff", "#102848"] :
+      ["#ffe08a", "#c07020", "#301808"];
     for (const b of game.eBullets) {
       ctx.fillStyle = "#1a0610";
       ctx.beginPath();
       ctx.arc(b.x, b.y, b.r + 2, 0, Math.PI * 2);
       ctx.fill();
       const eg = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, b.r + 2);
-      eg.addColorStop(0, "#ffd060");
-      eg.addColorStop(0.55, "#ff2a78");
-      eg.addColorStop(1, "#6a0020");
+      eg.addColorStop(0, bc[0]);
+      eg.addColorStop(0.55, bc[1]);
+      eg.addColorStop(1, bc[2]);
       ctx.fillStyle = eg;
       ctx.beginPath();
       ctx.arc(b.x, b.y, b.r + 0.5, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillStyle = "#fff0c0";
+      ctx.fillStyle = bc[0];
       ctx.beginPath();
       ctx.arc(b.x, b.y, Math.max(1.8, b.r * 0.38), 0, Math.PI * 2);
       ctx.fill();
