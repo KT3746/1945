@@ -107,32 +107,37 @@ export const STAGE_META = [
   {
     id: 1,
     name: "Mar de Vidro",
-    subtitle: "Águas claras, ilhas baixas.",
+    subtitle: "Linhas leves. Aprenda o ritmo.",
     palette: "tropic",
+    vibe: "calm",
   },
   {
     id: 2,
     name: "Arquipélago Cinza",
-    subtitle: "Ninho de artilharia costeira.",
+    subtitle: "Fogo do chão. Ninhos e mira.",
     palette: "overcast",
+    vibe: "coast",
   },
   {
     id: 3,
     name: "Estreito de Bronze",
-    subtitle: "O sol baixa e a Frota acorda.",
+    subtitle: "Paredes de Búfalo. Ases no céu.",
     palette: "dusk",
+    vibe: "fleet",
   },
   {
     id: 4,
     name: "Cânion de Nuvens",
-    subtitle: "Tempestade. Visão curta. Rajadas.",
+    subtitle: "Só mergulho. Saia do caminho.",
     palette: "storm",
+    vibe: "chaos",
   },
   {
     id: 5,
     name: "Fortaleza do Horizonte",
-    subtitle: "O Couraçado Aéreo Nadir espera.",
+    subtitle: "Grade de aço. Holofotes. Nadir.",
     palette: "fortress",
+    vibe: "steel",
   },
 ];
 
