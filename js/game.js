@@ -222,11 +222,28 @@ export class Game {
     this._checkStage();
   }
 
-  _scrollSpeed() {
+  _stageSpeedMul() {
+    // ritmo de movimento inimigo por identidade da fase
     const pal = STAGE_META[this.stageIndex].palette;
-    if (pal === "storm") return 92;
-    if (pal === "fortress") return 70;
-    return 58 + this.stageIndex * 6 + this.loop * 8;
+    let m = 1;
+    if (this.loop === 0 && this.stageIndex === 0) m *= 0.84;
+    if (pal === "tropic") m *= 0.92;
+    if (pal === "overcast") m *= 0.95;
+    if (pal === "dusk") m *= 1.0;
+    if (pal === "storm") m *= 1.22;
+    if (pal === "fortress") m *= 0.88;
+    return m;
+  }
+
+    _scrollSpeed() {
+    const pal = STAGE_META[this.stageIndex].palette;
+    // cada fase com “velocidade de mundo” bem distinta
+    if (pal === "tropic") return 48 + this.loop * 6;
+    if (pal === "overcast") return 62 + this.loop * 7;
+    if (pal === "dusk") return 74 + this.loop * 8;
+    if (pal === "storm") return 108 + this.loop * 10;
+    if (pal === "fortress") return 56 + this.loop * 5;
+    return 60 + this.stageIndex * 6 + this.loop * 8;
   }
 
   _playerShoot() {
@@ -292,10 +309,25 @@ export class Game {
     this.emptyT += dt;
     if (this.emptyT >= EMPTY_FILL_SEC && this.waveI < script.length) {
       this.emptyT = 0;
-      this._enemy("vespa", 48, -22, "down", 1, 1);
-      this._enemy("vespa", 312, -22, "down", 1, 2);
-      if (this.stageIndex >= 2) {
-        this._enemy("gaviao", W / 2, -30, "dive", 1 + this.loop * 0.1, 0);
+      const si = this.stageIndex;
+      if (si === 0) {
+        this._enemy("vespa", 60, -22, "sine", 1, 1);
+        this._enemy("vespa", 300, -22, "sine", 1, 2);
+      } else if (si === 1) {
+        this._enemy("artilheiro", 90, -22, "aim", 1, 0);
+        this._enemy("artilheiro", 270, -22, "aim", 1, 1);
+        this._enemy("ninho", 180, 8, "ground", 1, 0, { gy: 100 });
+      } else if (si === 2) {
+        this._enemy("bufalo", 120, -28, "down", 1, 0);
+        this._enemy("vespa", 240, -22, "down", 1, 1);
+      } else if (si === 3) {
+        this._enemy("gaviao", 40, -30, "dive", 1 + this.loop * 0.1, 0);
+        this._enemy("gaviao", 320, -30, "dive", 1 + this.loop * 0.1, 1);
+        this._enemy("gaviao", W / 2, -40, "dive", 1 + this.loop * 0.1, 2);
+      } else {
+        this._enemy("artilheiro", 70, -22, "aim", 1, 0);
+        this._enemy("artilheiro", 290, -22, "aim", 1, 1);
+        this._enemy("vespa", 180, -22, "down", 1, 2);
       }
     }
   }
@@ -322,6 +354,34 @@ export class Game {
           ey: 220 + i * 20,
         });
       }
+    } else if (ev.spawn === "wall") {
+      const n = ev.n | 0;
+      const gap = (W - 80) / Math.max(1, n - 1);
+      for (let i = 0; i < n; i++) {
+        this._enemy(ev.kind, 40 + i * gap, ev.y ?? -20, ev.pattern || "down", diff, i);
+      }
+    } else if (ev.spawn === "diag") {
+      const fromLeft = ev.from !== "right";
+      for (let i = 0; i < ev.n; i++) {
+        const x = fromLeft ? 40 + i * 48 : W - 40 - i * 48;
+        this._enemy(ev.kind, x, -18 - i * 22, ev.pattern || "down", diff, i);
+      }
+    } else if (ev.spawn === "pinch") {
+      const n = ev.n | 0;
+      for (let i = 0; i < n; i++) {
+        const left = i % 2 === 0;
+        this._enemy(ev.kind, left ? -20 : W + 20, 30 + (i >> 1) * 28, "swoop", diff, i, {
+          sx: left ? -20 : W + 20,
+          sy: 40 + (i >> 1) * 24,
+          ex: left ? W + 30 : -30,
+          ey: 200 + (i >> 1) * 30,
+        });
+      }
+    } else if (ev.spawn === "rain") {
+      for (let i = 0; i < ev.n; i++) {
+        const x = 28 + ((i * 97) % (W - 56));
+        this._enemy(ev.kind, x, -20 - i * 14, ev.pattern || "down", diff, i);
+      }
     } else if (ev.spawn === "single") {
       this._enemy(ev.kind, ev.x, -24, ev.pattern || "down", diff, 0);
     } else if (ev.spawn === "ground") {
@@ -343,7 +403,7 @@ export class Game {
       r: k.r,
       hp: Math.round(k.hp * diff),
       maxHp: Math.round(k.hp * diff),
-      speed: k.speed * (1 + this.loop * 0.08) * (this.loop === 0 && this.stageIndex === 0 ? 0.84 : 1),
+      speed: k.speed * (1 + this.loop * 0.08) * this._stageSpeedMul(),
       score: k.score,
       fireCd: 0.8 + phase * 0.18,
       fireEvery:
