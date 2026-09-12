@@ -111,8 +111,9 @@ export class AudioSys {
     this._beat -= dt;
     if (this._beat <= 0) {
       this._groove();
-      const hype = this._intense ? 0.3 : 0.44;
-      this._beat = this._comboHype > 0 ? Math.min(hype, 0.28) : hype;
+      const tempo = this._stageTempo();
+      const hype = this._intense ? tempo * 0.72 : tempo;
+      this._beat = this._comboHype > 0 ? Math.min(hype, tempo * 0.65) : hype;
       if (this._comboHype > 0) this._comboHype -= 1;
     }
   }
@@ -198,14 +199,17 @@ export class AudioSys {
     const t = ctx.currentTime;
     const intense = !!this._intense || this._comboHype > 0;
     const stage = this._stageId | 0;
+    const pal = this._palette || "tropic";
 
-    // kick
+    // kick — timbre por fase
     const o = ctx.createOscillator();
     const g = ctx.createGain();
-    o.type = "sine";
-    o.frequency.setValueAtTime(intense ? 160 : 122, t);
-    o.frequency.exponentialRampToValueAtTime(38, t + 0.12);
-    g.gain.setValueAtTime(intense ? 0.16 : 0.11, t);
+    o.type = pal === "fortress" ? "square" : pal === "storm" ? "sawtooth" : "sine";
+    const kickF = pal === "tropic" ? 110 : pal === "storm" ? 180 : pal === "dusk" ? 140 : 122;
+    o.frequency.setValueAtTime(intense ? kickF + 40 : kickF, t);
+    o.frequency.exponentialRampToValueAtTime(pal === "fortress" ? 48 : 38, t + 0.12);
+    const kickV = pal === "storm" ? 0.14 : pal === "fortress" ? 0.13 : 0.11;
+    g.gain.setValueAtTime(intense ? kickV + 0.05 : kickV, t);
     g.gain.exponentialRampToValueAtTime(0.0001, t + 0.14);
     o.connect(g);
     g.connect(this.musicGain);
@@ -213,22 +217,25 @@ export class AudioSys {
     o.stop(t + 0.15);
 
     this._step++;
-    // snare / clap
-    if (this._step % 2 === 0) {
-      this.noise(0.045, intense ? 0.055 : 0.032, 4200);
-      this.tone(180, "triangle", 0.04, 0.03, -40);
+    // snare / clap — mais denso na tempestade
+    const snareEvery = pal === "storm" ? 1 : 2;
+    if (this._step % snareEvery === 0) {
+      this.noise(0.045, intense ? 0.055 : pal === "overcast" ? 0.04 : 0.032, pal === "dusk" ? 2800 : 4200);
+      this.tone(pal === "dusk" ? 220 : 180, "triangle", 0.04, 0.03, -40);
     }
-    // hi-hat ticks
-    if (this._step % 1 === 0) this.noise(0.015, intense ? 0.03 : 0.018, 9000);
+    // hi-hat — tropical aberto, fortaleza metálica
+    const hatF = pal === "tropic" ? 11000 : pal === "fortress" ? 6000 : 9000;
+    this.noise(0.015, intense ? 0.03 : pal === "storm" ? 0.028 : 0.018, hatF);
 
-    // melodic pluck — escala muda por estágio
-    if (this._step % 2 === 0) {
+    // melodic pluck — escala + onda por estágio
+    const melEvery = pal === "tropic" ? 2 : pal === "storm" ? 1 : 2;
+    if (this._step % melEvery === 0) {
       const scales = [
-        [294, 349, 392, 440, 523],
-        [277, 330, 370, 415, 494],
-        [311, 370, 415, 466, 554],
-        [262, 311, 349, 415, 494],
-        [233, 294, 349, 415, 466],
+        [294, 349, 392, 440, 523],       // tropic major alegre
+        [277, 330, 370, 415, 494],       // overcast menor
+        [311, 370, 415, 466, 554],       // dusk brilhante
+        [262, 311, 349, 415, 494],       // storm tenso
+        [233, 294, 349, 415, 466],       // fortress grave
       ];
       const hypeScale = [392, 466, 523, 622, 698, 784];
       const scale = intense ? hypeScale : scales[stage % scales.length];
@@ -238,12 +245,12 @@ export class AudioSys {
       const pl2 = ctx.createOscillator();
       const pg = ctx.createGain();
       const pf = ctx.createBiquadFilter();
-      pl.type = "triangle";
+      pl.type = pal === "fortress" ? "square" : pal === "storm" ? "sawtooth" : "triangle";
       pl2.type = "sine";
       pl.frequency.value = f0;
-      pl2.frequency.value = f0 * 2.01;
+      pl2.frequency.value = f0 * (pal === "dusk" ? 1.5 : 2.01);
       pf.type = "lowpass";
-      pf.frequency.setValueAtTime(intense ? 4200 : 3000, t);
+      pf.frequency.setValueAtTime(intense ? 4200 : pal === "tropic" ? 3600 : 3000, t);
       pf.frequency.exponentialRampToValueAtTime(650, t + 0.22);
       pg.gain.setValueAtTime(intense ? 0.07 : 0.058, t);
       pg.gain.exponentialRampToValueAtTime(0.0001, t + 0.24);
@@ -257,12 +264,12 @@ export class AudioSys {
       pl2.stop(t + 0.26);
     }
 
-    // offbeat bass stab on 4
-    if (this._step % 4 === 0) {
-      this.tone(intense ? 98 : 82, "sine", 0.12, intense ? 0.08 : 0.055, -20);
+    // offbeat bass stab
+    if (this._step % (pal === "fortress" ? 2 : 4) === 0) {
+      this.tone(intense ? 98 : pal === "fortress" ? 70 : 82, "sine", 0.12, intense ? 0.08 : 0.055, -20);
     }
 
-    this.noise(0.018, intense ? 0.03 : 0.016, 8500);
+    this.noise(0.018, intense ? 0.03 : 0.016, pal === "storm" ? 12000 : 8500);
   }
 
   _env(g, t, a, d, vol) {
